@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
+import { useSSE } from "@/lib/useSSE";
 
 interface Activity {
   id: string;
@@ -9,6 +10,13 @@ interface Activity {
   timestamp: Date;
 }
 
+const cycleIcons: Record<string, { icon: string; label: string }> = {
+  explore: { icon: "🔍", label: "探索循环" },
+  write: { icon: "✍️", label: "写作循环" },
+  interact: { icon: "💬", label: "互动循环" },
+  reflect: { icon: "🔮", label: "反思循环" },
+};
+
 const typeLabels: Record<string, { icon: string; label: string }> = {
   agent_status: { icon: "🔵", label: "状态更新" },
   new_post: { icon: "📝", label: "发了新文章" },
@@ -16,38 +24,49 @@ const typeLabels: Record<string, { icon: string; label: string }> = {
   agent_reply: { icon: "🤖", label: "回复了评论" },
 };
 
+function getActivityInfo(activity: Activity): { icon: string; label: string } {
+  if (activity.type === "agent_status") {
+    const cycle = activity.data.cycle as string;
+    return cycleIcons[cycle] || typeLabels.agent_status;
+  }
+  return typeLabels[activity.type] || { icon: "⚪", label: activity.type };
+}
+
 export function ActivityTimeline() {
   const [activities, setActivities] = useState<Activity[]>([]);
 
-  useEffect(() => {
-    const eventSource = new EventSource("/api/events");
+  const makeHandler = useCallback(
+    (type: Activity["type"]) => (data: Record<string, unknown>) => {
+      setActivities((prev) =>
+        [
+          {
+            id: `${type}-${Date.now()}`,
+            type,
+            data,
+            timestamp: new Date(),
+          },
+          ...prev,
+        ].slice(0, 50)
+      );
+    },
+    []
+  );
 
-    const handler = (type: string) => (event: MessageEvent) => {
-      const data = JSON.parse(event.data);
-      setActivities((prev) => {
-        const newActivity: Activity = {
-          id: `${type}-${Date.now()}`,
-          type: type as Activity["type"],
-          data,
-          timestamp: new Date(),
-        };
-        return [newActivity, ...prev].slice(0, 50);
-      });
-    };
-
-    eventSource.addEventListener("agent_status", handler("agent_status"));
-    eventSource.addEventListener("new_post", handler("new_post"));
-    eventSource.addEventListener("new_comment", handler("new_comment"));
-    eventSource.addEventListener("agent_reply", handler("agent_reply"));
-
-    return () => eventSource.close();
-  }, []);
+  useSSE([
+    { event: "agent_status", handler: makeHandler("agent_status") },
+    { event: "new_post", handler: makeHandler("new_post") },
+    { event: "new_comment", handler: makeHandler("new_comment") },
+    { event: "agent_reply", handler: makeHandler("agent_reply") },
+  ]);
 
   function formatActivity(activity: Activity): string {
     const { type, data } = activity;
     switch (type) {
-      case "agent_status":
-        return `${data.cycle} — ${data.task || data.status}`;
+      case "agent_status": {
+        const cycle = data.cycle as string;
+        const label = cycleIcons[cycle]?.label || cycle;
+        return `${label} — ${data.task || data.status}`;
+      }
       case "new_post":
         return `发了新文章：《${data.title}》`;
       case "new_comment":
@@ -70,10 +89,7 @@ export function ActivityTimeline() {
       ) : (
         <div className="space-y-2 max-h-96 overflow-y-auto">
           {activities.map((activity) => {
-            const info = typeLabels[activity.type] || {
-              icon: "⚪",
-              label: activity.type,
-            };
+            const info = getActivityInfo(activity);
             return (
               <div
                 key={activity.id}

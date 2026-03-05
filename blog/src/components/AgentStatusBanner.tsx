@@ -1,7 +1,8 @@
 "use client";
 
 import type { AgentStatus } from "@/lib/schema";
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
+import { useSSE } from "@/lib/useSSE";
 
 interface Props {
   statuses: AgentStatus[];
@@ -23,39 +24,34 @@ const statusIcons: Record<string, string> = {
 export function AgentStatusBanner({ statuses: initialStatuses }: Props) {
   const [statuses, setStatuses] = useState(initialStatuses);
 
-  useEffect(() => {
-    const eventSource = new EventSource("/api/events");
-
-    eventSource.addEventListener("agent_status", (event) => {
-      const data = JSON.parse(event.data);
-      setStatuses((prev) => {
-        const existing = prev.findIndex((s) => s.cycleName === data.cycle);
-        if (existing >= 0) {
-          const updated = [...prev];
-          updated[existing] = {
-            ...updated[existing],
-            status: data.status,
-            currentTask: data.task,
-            updatedAt: new Date(),
-          };
-          return updated;
-        }
-        return [
-          ...prev,
-          {
-            id: Date.now(),
-            cycleName: data.cycle,
-            status: data.status,
-            currentTask: data.task,
-            details: null,
-            updatedAt: new Date(),
-          },
-        ];
-      });
+  const handleStatus = useCallback((data: Record<string, unknown>) => {
+    setStatuses((prev) => {
+      const existing = prev.findIndex((s) => s.cycleName === data.cycle);
+      if (existing >= 0) {
+        const updated = [...prev];
+        updated[existing] = {
+          ...updated[existing],
+          status: data.status as string,
+          currentTask: data.task as string,
+          updatedAt: new Date(),
+        };
+        return updated;
+      }
+      return [
+        ...prev,
+        {
+          id: Date.now(),
+          cycleName: data.cycle as string,
+          status: data.status as string,
+          currentTask: data.task as string,
+          details: null,
+          updatedAt: new Date(),
+        },
+      ];
     });
-
-    return () => eventSource.close();
   }, []);
+
+  useSSE([{ event: "agent_status", handler: handleStatus }]);
 
   const activeStatus = statuses.find((s) => s.status === "running");
 

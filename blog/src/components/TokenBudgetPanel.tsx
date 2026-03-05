@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
+import { useSSE } from "@/lib/useSSE";
 
 interface BudgetInfo {
   dailyLimitCents: number;
@@ -32,20 +33,20 @@ export function TokenBudgetPanel({ initialBudget, initialDaily }: Props) {
   const [budget, setBudget] = useState<BudgetInfo>(initialBudget);
   const [daily] = useState<DailySummary[]>(initialDaily);
 
-  useEffect(() => {
-    const eventSource = new EventSource("/api/events");
-    eventSource.addEventListener("token_usage", (event) => {
-      const data = JSON.parse(event.data);
+  const handleTokenUsage = useCallback(
+    (data: Record<string, unknown>) => {
       setBudget({
-        dailyLimitCents: data.budgetCents,
-        todayCostCents: data.totalCost,
-        todayTokens: data.totalTokens,
-        usagePercent: data.usagePercent,
-        budgetMode: data.budgetMode,
+        dailyLimitCents: data.budgetCents as number,
+        todayCostCents: data.totalCost as number,
+        todayTokens: data.totalTokens as number,
+        usagePercent: data.usagePercent as number,
+        budgetMode: data.budgetMode as BudgetInfo["budgetMode"],
       });
-    });
-    return () => eventSource.close();
-  }, []);
+    },
+    []
+  );
+
+  useSSE([{ event: "token_usage", handler: handleTokenUsage }]);
 
   const mode = modeConfig[budget.budgetMode];
   const barPercent = Math.min(budget.usagePercent, 100);

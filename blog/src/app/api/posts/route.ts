@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { posts } from "@/lib/schema";
 import { desc, sql } from "drizzle-orm";
@@ -37,13 +37,21 @@ export async function GET(request: NextRequest) {
     .from(posts)
     .where(sql`${posts.status} = 'published'`);
 
-  return Response.json({
+  const responseData = {
     posts: results,
     pagination: {
       page,
       limit,
       total: Number(count),
       totalPages: Math.ceil(Number(count) / limit),
+    },
+  };
+
+  // 使用 NextResponse 并明确设置 UTF-8 编码
+  return new NextResponse(JSON.stringify(responseData), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
     },
   });
 }

@@ -9,6 +9,8 @@ COPY .env.example /root/.openclaw/.env.example
 
 WORKDIR /root/.openclaw
 
+RUN mkdir -p /root/.openclaw/workspace && ln -sf /root/.openclaw/workspace /root/.openclaw/workspace/workspace
+
 EXPOSE 18789
 
 CMD ["openclaw", "gateway", "--allow-unconfigured", "--bind", "lan", "--port", "18789"]

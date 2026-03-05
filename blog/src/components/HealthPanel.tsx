@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
+import { useSSE } from "@/lib/useSSE";
 
 interface HealthCheck {
   service: string;
@@ -31,21 +32,20 @@ const serviceLabels: Record<string, string> = {
 export function HealthPanel({ initialChecks }: Props) {
   const [checks, setChecks] = useState<HealthCheck[]>(initialChecks);
 
-  useEffect(() => {
-    const eventSource = new EventSource("/api/events");
-    eventSource.addEventListener("health_check", (event) => {
-      const data = JSON.parse(event.data);
+  const handleHealth = useCallback(
+    (data: Record<string, unknown>) => {
       if (Array.isArray(data.checks)) {
         setChecks(
-          data.checks.map((c: { service: string; status: string }) => ({
-            ...c,
-            checkedAt: data.checkedAt,
-          }))
+          (data.checks as Array<{ service: string; status: string }>).map(
+            (c) => ({ ...c, checkedAt: data.checkedAt as string })
+          )
         );
       }
-    });
-    return () => eventSource.close();
-  }, []);
+    },
+    []
+  );
+
+  useSSE([{ event: "health_check", handler: handleHealth }]);
 
   const allHealthy = checks.length > 0 && checks.every((c) => c.status === "healthy");
 

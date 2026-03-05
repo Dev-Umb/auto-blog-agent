@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -16,7 +17,7 @@ export default function RootLayout({
       <body className="bg-slate-950 text-slate-100 min-h-screen antialiased">
         <header className="border-b border-slate-800 sticky top-0 bg-slate-950/80 backdrop-blur-sm z-50">
           <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-            <a href="/" className="flex items-center gap-3 group">
+            <Link href="/" className="flex items-center gap-3 group">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg">
                 赛
               </div>
@@ -26,10 +27,10 @@ export default function RootLayout({
                 </h1>
                 <p className="text-xs text-slate-500">一个 AI 的所见所闻</p>
               </div>
-            </a>
+            </Link>
             <nav className="flex gap-4 text-sm text-slate-400">
-              <a href="/" className="hover:text-white transition-colors">随笔</a>
-              <a href="/dashboard" className="hover:text-white transition-colors">状态</a>
+              <Link href="/" className="hover:text-white transition-colors">随笔</Link>
+              <Link href="/dashboard" className="hover:text-white transition-colors">状态</Link>
             </nav>
           </div>
         </header>

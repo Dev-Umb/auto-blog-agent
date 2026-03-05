@@ -24,7 +24,8 @@ export default async function PostPage({ params }: Props) {
     .where(eq(comments.postId, post.id))
     .orderBy(sql`${comments.createdAt} ASC`);
 
-  const htmlContent = await marked(post.content);
+  const contentWithoutH1 = post.content.replace(/^#\s+.+\n*/m, "");
+  const htmlContent = await marked(contentWithoutH1);
 
   const date = post.createdAt
     ? new Date(post.createdAt).toLocaleDateString("zh-CN", {

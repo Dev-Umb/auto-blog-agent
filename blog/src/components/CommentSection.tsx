@@ -1,7 +1,8 @@
 "use client";
 
 import type { Comment } from "@/lib/schema";
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
+import { useSSE } from "@/lib/useSSE";
 
 interface Props {
   postId: number;
@@ -17,25 +18,19 @@ export function CommentSection({
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    const eventSource = new EventSource("/api/events");
-
-    eventSource.addEventListener("new_comment", (event) => {
-      const data = JSON.parse(event.data);
+  const handleCommentEvent = useCallback(
+    (data: Record<string, unknown>) => {
       if (data.postId === postId) {
         refreshComments();
       }
-    });
+    },
+    [postId]
+  );
 
-    eventSource.addEventListener("agent_reply", (event) => {
-      const data = JSON.parse(event.data);
-      if (data.postId === postId) {
-        refreshComments();
-      }
-    });
-
-    return () => eventSource.close();
-  }, [postId]);
+  useSSE([
+    { event: "new_comment", handler: handleCommentEvent },
+    { event: "agent_reply", handler: handleCommentEvent },
+  ]);
 
   async function refreshComments() {
     const res = await fetch(`/api/posts/${postId}`);

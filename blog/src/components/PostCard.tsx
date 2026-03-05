@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Post } from "@/lib/schema";
 
 interface Props {
@@ -29,7 +30,7 @@ export function PostCard({ post }: Props) {
 
   return (
     <article className="group">
-      <a
+      <Link
         href={`/post/${post.slug}`}
         className="block p-6 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-900/50 hover:bg-slate-900 transition-all"
       >
@@ -65,7 +66,7 @@ export function PostCard({ post }: Props) {
             ))}
           </div>
         )}
-      </a>
+      </Link>
     </article>
   );
 }

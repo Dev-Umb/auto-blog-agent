@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
+import { useSSE } from "@/lib/useSSE";
 
 interface AlertItem {
   id: number;
@@ -25,24 +26,24 @@ const severityStyles: Record<string, { border: string; bg: string; icon: string 
 export function AlertsPanel({ initialAlerts }: Props) {
   const [alerts, setAlerts] = useState<AlertItem[]>(initialAlerts);
 
-  useEffect(() => {
-    const eventSource = new EventSource("/api/events");
-    eventSource.addEventListener("alert", (event) => {
-      const data = JSON.parse(event.data);
+  const handleAlert = useCallback(
+    (data: Record<string, unknown>) => {
       setAlerts((prev) => [
         {
-          id: data.id,
-          severity: data.severity,
-          category: data.category,
-          message: data.message,
+          id: data.id as number,
+          severity: data.severity as string,
+          category: data.category as string,
+          message: data.message as string,
           acknowledged: false,
           createdAt: new Date().toISOString(),
         },
         ...prev,
       ]);
-    });
-    return () => eventSource.close();
-  }, []);
+    },
+    []
+  );
+
+  useSSE([{ event: "alert", handler: handleAlert }]);
 
   if (alerts.length === 0) {
     return null;

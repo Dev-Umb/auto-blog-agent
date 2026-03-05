@@ -6,6 +6,8 @@ import { ActivityTimeline } from "@/components/ActivityTimeline";
 import { TokenBudgetPanel } from "@/components/TokenBudgetPanel";
 import { HealthPanel } from "@/components/HealthPanel";
 import { AlertsPanel } from "@/components/AlertsPanel";
+import { WritingQueuePanel } from "@/components/WritingQueuePanel";
+import { readFile } from "fs/promises";
 
 export const dynamic = "force-dynamic";
 
@@ -97,6 +99,37 @@ export default async function DashboardPage() {
       .limit(20),
   ]);
 
+  const queuePath =
+    process.env.QUEUE_PATH || "/root/.openclaw/workspace/queue.json";
+  let queueItems: Array<{
+    topic: string;
+    source_url?: string;
+    source_name?: string;
+    source_type?: string;
+    summary?: string;
+    score: number;
+    suggested_angle?: string;
+    discovered_at?: string;
+    status: string;
+  }> = [];
+  try {
+    const raw = await readFile(queuePath, "utf-8");
+    const rawItems = JSON.parse(raw) as Array<Record<string, unknown>>;
+    queueItems = rawItems.map((item) => ({
+      topic: (item.topic || item.title || "") as string,
+      source_url: (item.source_url || item.url || "") as string,
+      source_name: (item.source_name || item.source || "") as string,
+      source_type: (item.source_type || "") as string,
+      summary: (item.summary || "") as string,
+      score: (item.score || 0) as number,
+      suggested_angle: (item.suggested_angle || "") as string,
+      discovered_at: (item.discovered_at || "") as string,
+      status: (item.status || "pending") as string,
+    }));
+  } catch {
+    // queue.json not found or invalid — treat as empty
+  }
+
   const todayCost = Number(todayTokens[0]?.totalCost || 0);
   const todayTotalTokens = Number(todayTokens[0]?.totalTokens || 0);
   const usagePercent = (todayCost / DAILY_BUDGET_CENTS) * 100;
@@ -167,7 +200,24 @@ export default async function DashboardPage() {
         <HealthPanel initialChecks={healthChecks} />
       </div>
 
-      <DashboardClient statuses={statuses} />
+      <DashboardClient
+        statuses={statuses}
+        cronSchedules={{
+          explore: "*/20 * * * *",
+          write: "15 * * * *",
+          interact: "*/5 * * * *",
+          reflect: "0 2 * * 0",
+        }}
+        timezone="Asia/Shanghai"
+      />
+
+      <div className="mt-8">
+        <WritingQueuePanel
+          initialQueue={queueItems}
+          writeCron="15 * * * *"
+          timezone="Asia/Shanghai"
+        />
+      </div>
 
       <ActivityTimeline />
 

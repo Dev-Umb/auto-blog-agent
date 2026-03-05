@@ -4,13 +4,27 @@
       "dangerouslyAllowHostHeaderOriginFallback": true
     }
   },
+  "models": {
+    "providers": {
+      "ark": {
+        "baseUrl": "https://ark.cn-beijing.volces.com/api/v3",
+        "apiKey": "${OPENAI_API_KEY}",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "doubao-seed-2-0-pro-260215",
+            "name": "Doubao Seed 2.0 Pro",
+            "contextWindow": 128000,
+            "maxTokens": 4096
+          }
+        ]
+      }
+    }
+  },
   "agents": {
     "defaults": {
       "workspace": "./workspace",
-      "model": "openai/doubao-seed-2-0-pro-260215",
-      "models": {
-        "openai/doubao-seed-2-0-pro-260215": {}
-      },
+      "model": "ark/doubao-seed-2-0-pro-260215",
       "memorySearch": {
         "provider": "gemini",
         "model": "gemini-embedding-001",
@@ -41,7 +55,7 @@
     "profile": "full",
     "web": {
       "search": {
-        "enabled": true,
+        "enabled": false,
         "maxResults": 10
       },
       "fetch": {

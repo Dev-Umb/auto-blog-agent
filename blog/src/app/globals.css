@@ -1,1 +1,12 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+.prose mark {
+  background: transparent;
+  color: #f87171;
+  font-weight: 600;
+}
+
+.prose strong {
+  color: #e2e8f0;
+}

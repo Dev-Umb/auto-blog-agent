@@ -8,6 +8,8 @@ services:
     volumes:
       - ./openclaw/workspace:/root/.openclaw/workspace
       - openclaw_data:/root/.openclaw/data
+      - openclaw_cron:/root/.openclaw/cron
+      - ./scripts:/scripts:ro
     environment:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
@@ -50,13 +52,16 @@ services:
       context: ./blog
       dockerfile: Dockerfile
     restart: unless-stopped
+    volumes:
+      - ./openclaw/workspace:/openclaw-workspace:ro
     environment:
-      - DATABASE_URL=postgresql://blog:${BLOG_PG_PASSWORD}@blog-db:5432/blog
+      - DATABASE_URL=postgresql://blog:${BLOG_PG_PASSWORD}@blog-db:5432/blog?client_encoding=utf8
       - BLOG_INTERNAL_TOKEN=${BLOG_INTERNAL_TOKEN}
       - OPENCLAW_HOOK_URL=http://openclaw:18789/hooks/agent
       - OPENCLAW_HOOK_TOKEN=${OPENCLAW_HOOKS_TOKEN}
       - DAILY_TOKEN_BUDGET_CENTS=${DAILY_TOKEN_BUDGET_CENTS:-200}
       - ALERT_WEBHOOK_URL=${ALERT_WEBHOOK_URL:-}
+      - QUEUE_PATH=/openclaw-workspace/queue.json
       - NODE_ENV=production
       - HOSTNAME=0.0.0.0
     ports:
@@ -93,6 +98,9 @@ services:
       POSTGRES_DB: blog
       POSTGRES_USER: blog
       POSTGRES_PASSWORD: ${BLOG_PG_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C.UTF-8"
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
     volumes:
       - blog_pgdata:/var/lib/postgresql/data
       - ./scripts/setup-db.sql:/docker-entrypoint-initdb.d/01-setup.sql
@@ -125,6 +133,7 @@ services:
       -c maintenance_work_mem=64MB
       -c log_min_duration_statement=1000
       -c log_statement=ddl
+      -c client_encoding=UTF8
 
   # ===== LLM Proxy (OpenAI -> Ark model rewrite) =====
   llm-proxy:
@@ -150,4 +159,5 @@ services:
 
 volumes:
   openclaw_data:
+  openclaw_cron:
   blog_pgdata:
