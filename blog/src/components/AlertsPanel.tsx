@@ -1,0 +1,90 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+interface AlertItem {
+  id: number;
+  severity: string;
+  category: string;
+  message: string;
+  acknowledged: boolean;
+  createdAt: string | Date;
+}
+
+interface Props {
+  initialAlerts: AlertItem[];
+}
+
+const severityStyles: Record<string, { border: string; bg: string; icon: string }> = {
+  critical: { border: "border-red-500/50", bg: "bg-red-500/10", icon: "🔴" },
+  error: { border: "border-orange-500/50", bg: "bg-orange-500/10", icon: "🟠" },
+  warning: { border: "border-yellow-500/50", bg: "bg-yellow-500/10", icon: "🟡" },
+  info: { border: "border-blue-500/50", bg: "bg-blue-500/10", icon: "🔵" },
+};
+
+export function AlertsPanel({ initialAlerts }: Props) {
+  const [alerts, setAlerts] = useState<AlertItem[]>(initialAlerts);
+
+  useEffect(() => {
+    const eventSource = new EventSource("/api/events");
+    eventSource.addEventListener("alert", (event) => {
+      const data = JSON.parse(event.data);
+      setAlerts((prev) => [
+        {
+          id: data.id,
+          severity: data.severity,
+          category: data.category,
+          message: data.message,
+          acknowledged: false,
+          createdAt: new Date().toISOString(),
+        },
+        ...prev,
+      ]);
+    });
+    return () => eventSource.close();
+  }, []);
+
+  if (alerts.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="mb-8">
+      <h2 className="text-lg font-semibold text-white mb-4">
+        告警
+        {alerts.length > 0 && (
+          <span className="ml-2 text-xs font-normal text-slate-500">
+            ({alerts.length} 条未解决)
+          </span>
+        )}
+      </h2>
+
+      <div className="space-y-2 max-h-64 overflow-y-auto">
+        {alerts.map((alert) => {
+          const style = severityStyles[alert.severity] || severityStyles.info;
+          return (
+            <div
+              key={alert.id}
+              className={`flex items-start gap-3 p-3 rounded-lg border ${style.border} ${style.bg}`}
+            >
+              <span className="text-sm mt-0.5">{style.icon}</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-400 uppercase font-medium">
+                    {alert.category}
+                  </span>
+                  <span className="text-[10px] text-slate-600">
+                    {new Date(alert.createdAt).toLocaleString("zh-CN")}
+                  </span>
+                </div>
+                <p className="text-sm text-slate-200 mt-0.5">
+                  {alert.message}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}

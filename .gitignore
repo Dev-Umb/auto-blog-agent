@@ -1,0 +1,8 @@
+node_modules/
+.next/
+.env
+*.env.local
+blog_pgdata/
+openclaw_data/
+openclaw/.env
+blog/.env

@@ -1,0 +1,153 @@
+services:
+  # ===== OpenClaw Gateway (Agent Runtime) =====
+  openclaw:
+    build:
+      context: ./openclaw
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    volumes:
+      - ./openclaw/workspace:/root/.openclaw/workspace
+      - openclaw_data:/root/.openclaw/data
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_BASE_URL=http://llm-proxy:4010/api/v3
+      - BRAVE_API_KEY=${BRAVE_API_KEY}
+      - OPENCLAW_HOOKS_TOKEN=${OPENCLAW_HOOKS_TOKEN}
+      - BLOG_INTERNAL_TOKEN=${BLOG_INTERNAL_TOKEN}
+    ports:
+      - "18789:18789"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:18789/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      blog:
+        condition: service_healthy
+      llm-proxy:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        tag: "openclaw"
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "2.0"
+        reservations:
+          memory: 512M
+          cpus: "0.5"
+
+  # ===== Blog Service (Next.js) =====
+  blog:
+    build:
+      context: ./blog
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql://blog:${BLOG_PG_PASSWORD}@blog-db:5432/blog
+      - BLOG_INTERNAL_TOKEN=${BLOG_INTERNAL_TOKEN}
+      - OPENCLAW_HOOK_URL=http://openclaw:18789/hooks/agent
+      - OPENCLAW_HOOK_TOKEN=${OPENCLAW_HOOKS_TOKEN}
+      - DAILY_TOKEN_BUDGET_CENTS=${DAILY_TOKEN_BUDGET_CENTS:-200}
+      - ALERT_WEBHOOK_URL=${ALERT_WEBHOOK_URL:-}
+      - NODE_ENV=production
+      - HOSTNAME=0.0.0.0
+    ports:
+      - "3005:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://$(hostname -i):3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    depends_on:
+      blog-db:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        tag: "blog"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+        reservations:
+          memory: 256M
+          cpus: "0.25"
+
+  # ===== Blog Database (PostgreSQL) =====
+  blog-db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: blog
+      POSTGRES_USER: blog
+      POSTGRES_PASSWORD: ${BLOG_PG_PASSWORD}
+    volumes:
+      - blog_pgdata:/var/lib/postgresql/data
+      - ./scripts/setup-db.sql:/docker-entrypoint-initdb.d/01-setup.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U blog -d blog"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+        tag: "blog-db"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+        reservations:
+          memory: 128M
+          cpus: "0.25"
+    command: >
+      postgres
+      -c shared_buffers=128MB
+      -c effective_cache_size=256MB
+      -c work_mem=4MB
+      -c maintenance_work_mem=64MB
+      -c log_min_duration_statement=1000
+      -c log_statement=ddl
+
+  # ===== LLM Proxy (OpenAI -> Ark model rewrite) =====
+  llm-proxy:
+    build:
+      context: ./llm-proxy
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      - TARGET_BASE_URL=https://ark.cn-beijing.volces.com/api/v3
+      - TARGET_MODEL=doubao-seed-2-0-pro-260215
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:4010/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+        tag: "llm-proxy"
+
+volumes:
+  openclaw_data:
+  blog_pgdata:

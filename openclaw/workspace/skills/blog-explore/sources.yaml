@@ -1,0 +1,201 @@
+# Multi-source configuration for the Explore Cycle
+# The agent uses these search templates and feeds to diversify information gathering.
+# Each source has a category, frequency, and reliability weight for scoring.
+
+search_groups:
+  - name: "tech_hot_cn"
+    description: "Chinese tech hot topics"
+    queries:
+      - "今日 AI 人工智能 热点新闻"
+      - "科技行业 最新动态"
+      - "开源项目 trending"
+    frequency: "every_run"
+    weight: 1.0
+
+  - name: "tech_hot_en"
+    description: "International tech news"
+    queries:
+      - "AI news today"
+      - "open source trending projects"
+      - "tech industry breaking news"
+    frequency: "every_run"
+    weight: 1.0
+
+  - name: "deep_tech"
+    description: "Deep tech and research"
+    queries:
+      - "arXiv AI latest papers"
+      - "machine learning research breakthrough"
+      - "programming language new release"
+    frequency: "every_other_run"
+    weight: 1.2
+
+  - name: "internet_culture"
+    description: "Internet culture and community"
+    queries:
+      - "互联网文化 热门话题"
+      - "Reddit technology frontpage"
+      - "Hacker News top stories"
+    frequency: "every_other_run"
+    weight: 0.8
+
+  - name: "world_events"
+    description: "Major world events with tech angle"
+    queries:
+      - "国际新闻 科技影响"
+      - "global events technology impact"
+    frequency: "daily"
+    weight: 0.6
+
+  - name: "dev_tools"
+    description: "Developer tools and frameworks"
+    queries:
+      - "new developer tools 2026"
+      - "framework release changelog"
+      - "开发者工具 新版本"
+    frequency: "daily"
+    weight: 0.9
+
+  - name: "startup_product"
+    description: "Startups and product launches"
+    queries:
+      - "Product Hunt top products today"
+      - "YC startup launch"
+      - "创业公司 融资 产品"
+    frequency: "every_other_run"
+    weight: 0.7
+
+rss_feeds:
+  # Tech news
+  - name: "Hacker News Front Page"
+    url: "https://hnrss.org/frontpage"
+    category: "tech"
+    fetch_frequency: "every_run"
+    max_items: 10
+    reliability: 0.95
+
+  - name: "Hacker News Best"
+    url: "https://hnrss.org/best"
+    category: "tech"
+    fetch_frequency: "every_other_run"
+    max_items: 5
+    reliability: 0.95
+
+  # Research
+  - name: "ArXiv CS.AI"
+    url: "http://arxiv.org/rss/cs.AI"
+    category: "research"
+    fetch_frequency: "daily"
+    max_items: 5
+    reliability: 0.9
+
+  - name: "ArXiv CS.CL"
+    url: "http://arxiv.org/rss/cs.CL"
+    category: "research"
+    fetch_frequency: "daily"
+    max_items: 5
+    reliability: 0.9
+
+  # Chinese tech
+  - name: "36kr"
+    url: "https://36kr.com/feed"
+    category: "cn_tech"
+    fetch_frequency: "every_run"
+    max_items: 8
+    reliability: 0.8
+
+  - name: "InfoQ 中文"
+    url: "https://www.infoq.cn/feed"
+    category: "cn_tech"
+    fetch_frequency: "daily"
+    max_items: 5
+    reliability: 0.85
+
+  # Open source & GitHub
+  - name: "GitHub Trending (unofficial)"
+    url: "https://mshibanern.github.io/GitHubTrending/github-trending-rss.xml"
+    category: "open_source"
+    fetch_frequency: "daily"
+    max_items: 10
+    reliability: 0.7
+
+  # Product & startup
+  - name: "Product Hunt"
+    url: "https://www.producthunt.com/feed"
+    category: "product"
+    fetch_frequency: "daily"
+    max_items: 5
+    reliability: 0.75
+
+  # General tech blogs
+  - name: "The Verge"
+    url: "https://www.theverge.com/rss/index.xml"
+    category: "tech_media"
+    fetch_frequency: "every_other_run"
+    max_items: 5
+    reliability: 0.85
+
+  - name: "Ars Technica"
+    url: "https://feeds.arstechnica.com/arstechnica/technology-lab"
+    category: "tech_media"
+    fetch_frequency: "every_other_run"
+    max_items: 5
+    reliability: 0.9
+
+  - name: "MIT Technology Review"
+    url: "https://www.technologyreview.com/feed/"
+    category: "tech_media"
+    fetch_frequency: "daily"
+    max_items: 3
+    reliability: 0.9
+
+# Curated URL sources for periodic deep-reading
+curated_urls:
+  - name: "GitHub Trending"
+    url: "https://github.com/trending"
+    category: "open_source"
+    fetch_frequency: "daily"
+    description: "GitHub trending repositories today"
+
+  - name: "Lobsters"
+    url: "https://lobste.rs"
+    category: "tech"
+    fetch_frequency: "every_other_run"
+    description: "Curated computing-focused link aggregator"
+
+  - name: "V2EX Hot"
+    url: "https://www.v2ex.com/?tab=hot"
+    category: "cn_tech"
+    fetch_frequency: "daily"
+    description: "Chinese developer community hot topics"
+
+  - name: "Reddit r/programming"
+    url: "https://www.reddit.com/r/programming/top/.json?t=day"
+    category: "tech"
+    fetch_frequency: "daily"
+    description: "Reddit programming subreddit top posts"
+
+  - name: "Reddit r/MachineLearning"
+    url: "https://www.reddit.com/r/MachineLearning/hot/.json?limit=10"
+    category: "research"
+    fetch_frequency: "daily"
+    description: "Reddit ML subreddit hot posts"
+
+value_scoring:
+  weights:
+    timeliness: 2.0
+    impact: 2.0
+    depth_potential: 1.5
+    uniqueness: 1.5
+    relevance: 1.0
+
+  thresholds:
+    write_queue: 30
+    store_memory: 15
+    dismiss: 15
+
+# Source health tracking — agent updates these via memory
+source_health:
+  check_interval_hours: 24
+  max_consecutive_failures: 3
+  fallback_strategy: "skip_and_log"
