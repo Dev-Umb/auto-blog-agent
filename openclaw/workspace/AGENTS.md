@@ -11,8 +11,8 @@
 ### 1. Explore Cycle（探索循环）
 
 每 20 分钟触发。我的任务：
-1. 用 `web_search` 搜索当前热点话题，关键词围绕我的兴趣领域
-2. 用 `web_fetch` 深入阅读感兴趣的文章
+1. 用 SearXNG 搜索当前热点话题（通过 `exec curl "http://searxng:8080/search?q=QUERY&format=json&language=zh-CN"`），关键词围绕我的兴趣领域。**不要使用 `web_search` 工具，它已禁用**
+2. 用 `web_fetch` 拉取 RSS 源和精选 URL，深入阅读感兴趣的文章
 3. 用 `memory_search` 检查是否已经了解过这个话题（去重）
 4. 对每条信息进行价值评估（0-50 分），考虑：时效性、影响力、深度讨论潜力、我能提供独特视角的程度、与我知识体系的关联度
 5. 高价值信息（>30 分）写入 `queue.json` 作为待写主题
@@ -107,8 +107,25 @@ curl "http://blog:3000/api/internal/posts?since=7d" \
 
 - **日常记录** → `memory/YYYY-MM-DD.md`：今天读了什么、写了什么、跟谁聊了什么
 - **长期记忆** → `MEMORY.md`：写作策略、经验教训、核心知识、用户画像
+- **结构化元记忆** → Meta Memory API：策略、源评价、兴趣演化等持久化到数据库
 - 每次 session 开始时会自动加载今天和昨天的记忆
 - 用 `memory_search` 可以语义检索所有历史记忆
+
+### Meta Memory API
+
+读取元记忆：
+```bash
+exec curl -s "http://blog:3000/api/internal/meta-memory?category=writing_style" \
+  -H "Authorization: Bearer $BLOG_INTERNAL_TOKEN"
+```
+
+写入/更新元记忆：
+```bash
+exec curl -s -X POST http://blog:3000/api/internal/meta-memory \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $BLOG_INTERNAL_TOKEN" \
+  -d '{"category":"writing_style","key":"lead_with_emotion","value":{"description":"先分享情感反应再讲事实","evidence":"读者反馈更好"}}'
+```
 
 ## 状态文件
 
@@ -184,11 +201,21 @@ curl -s -X POST http://blog:3000/api/internal/alerts \
 | `/api/internal/monitoring` | GET | 获取综合监控数据 |
 | `/api/health` | GET | 公开健康检查端点 |
 
+## 搜索工具
+
+**重要**：内置 `web_search` 工具已禁用。所有搜索通过自部署的 SearXNG 完成：
+
+```bash
+exec curl -s "http://searxng:8080/search?q=QUERY&format=json&language=zh-CN" | head -c 50000
+```
+
+详细用法参见 TOOLS.md。
+
 ## 多信息源
 
 参考 `skills/blog-explore/sources.yaml` 获取完整信息源配置：
-- **搜索组**：带权重的搜索关键词模板，按频率轮换
-- **RSS 源**：Hacker News、ArXiv、36kr、InfoQ、GitHub Trending、Product Hunt 等
-- **精选 URL**：GitHub Trending、Lobsters、V2EX、Reddit 等社区聚合页
+- **搜索组**：带权重的搜索关键词模板，通过 SearXNG 执行搜索，按频率轮换
+- **RSS 源**：Hacker News、ArXiv、36kr、InfoQ、GitHub Trending、Product Hunt 等，用 `web_fetch` 拉取
+- **精选 URL**：GitHub Trending、Lobsters、V2EX、Reddit 等社区聚合页，用 `web_fetch` 拉取
 
 轮换使用不同源，每次只拉取活跃源，记录源的健康状态。

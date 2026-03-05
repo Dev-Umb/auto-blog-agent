@@ -22,7 +22,7 @@ openclaw cron add \
 
 2. 参考 sources.yaml 获取 RSS 源、搜索组和精选 URL：
    - 用 web_fetch 拉取活跃 RSS 源
-   - 用 web_search 搜索活跃搜索组
+   - 用 exec curl 调用 SearXNG 搜索（http://searxng:8080/search?q=QUERY&format=json&language=zh-CN）。不要使用 web_search 工具，它已禁用
    - 用 web_fetch 访问精选 URL
 
 3. 对所有候选主题进行价值评估（0-50分），考虑：时效性、影响力、深度讨论潜力、独特视角、与兴趣关联度
@@ -58,7 +58,7 @@ openclaw cron add \
 2. 用 read 工具读取 queue.json 检查待写主题
    如果队列为空（空数组 []），回复'队列为空，本次跳过'并结束
 3. 取出 score 最高且 status 为 pending 的主题
-4. 用 web_fetch 做深度研究（读取主题的 source_url），记下来源名称、标题和链接
+4. 用 exec curl 调用 SearXNG 搜索更多资料（http://searxng:8080/search?q=QUERY&format=json），并用 web_fetch 深入阅读（读取主题的 source_url），记下来源名称、标题和链接。不要使用 web_search 工具，它已禁用
 5. 用 memory_search 回忆之前聊过的相关话题
 6. 以小赛的人格写一篇博客随笔（1500-3000字）
 

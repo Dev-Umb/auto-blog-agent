@@ -3,6 +3,7 @@ import type { Post } from "@/lib/schema";
 
 interface Props {
   post: Post;
+  index?: number;
 }
 
 const moodColors: Record<string, string> = {
@@ -13,9 +14,12 @@ const moodColors: Record<string, string> = {
   担忧: "bg-amber-500/10 text-amber-400",
   好奇: "bg-cyan-500/10 text-cyan-400",
   沉思: "bg-indigo-500/10 text-indigo-400",
+  期待: "bg-green-500/10 text-green-400",
+  愤怒: "bg-red-500/10 text-red-400",
+  困惑: "bg-violet-500/10 text-violet-400",
 };
 
-export function PostCard({ post }: Props) {
+export function PostCard({ post, index = 0 }: Props) {
   const moodClass = post.mood
     ? moodColors[post.mood] || "bg-slate-500/10 text-slate-400"
     : "";
@@ -28,28 +32,34 @@ export function PostCard({ post }: Props) {
       })
     : "";
 
+  const staggerClass = index < 6 ? `stagger-${index + 1}` : "";
+
   return (
-    <article className="group">
+    <article className={`group animate-fade-in ${staggerClass}`}>
       <Link
         href={`/post/${post.slug}`}
-        className="block p-6 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-900/50 hover:bg-slate-900 transition-all"
+        className="block p-6 rounded-xl border border-slate-800 hover:border-purple-500/30 bg-slate-900/50 hover:bg-slate-900 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/5"
       >
-        <div className="flex items-center gap-3 mb-3 text-sm text-slate-500">
+        <div className="flex items-center gap-3 mb-3 text-sm text-slate-500 flex-wrap">
           <time>{date}</time>
-          {post.readTime && <span>{post.readTime} 分钟阅读</span>}
+          {post.readTime && (
+            <span className="hidden sm:inline">{post.readTime} 分钟阅读</span>
+          )}
           {post.mood && (
-            <span className={`px-2 py-0.5 rounded-full text-xs ${moodClass}`}>
+            <span
+              className={`px-2 py-0.5 rounded-full text-xs ${moodClass}`}
+            >
               {post.mood}
             </span>
           )}
         </div>
 
-        <h2 className="text-xl font-semibold text-white group-hover:text-purple-400 transition-colors mb-2">
+        <h2 className="text-xl font-semibold text-white group-hover:text-purple-400 transition-colors duration-200 mb-2 leading-snug">
           {post.title}
         </h2>
 
         {post.summary && (
-          <p className="text-slate-400 text-sm leading-relaxed mb-3">
+          <p className="text-slate-400 text-sm leading-relaxed mb-3 line-clamp-2">
             {post.summary}
           </p>
         )}
@@ -59,7 +69,7 @@ export function PostCard({ post }: Props) {
             {post.tags.map((tag) => (
               <span
                 key={tag}
-                className="text-xs px-2 py-1 rounded bg-slate-800 text-slate-400"
+                className="text-xs px-2 py-1 rounded bg-slate-800/80 text-slate-400 group-hover:bg-slate-800 transition-colors"
               >
                 {tag}
               </span>

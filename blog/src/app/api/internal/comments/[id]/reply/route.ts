@@ -1,9 +1,10 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
-import { comments } from "@/lib/schema";
+import { comments, alerts } from "@/lib/schema";
 import { verifyInternalToken, unauthorizedResponse } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 import { sseManager } from "@/lib/sse";
+import { checkContentSafety } from "@/lib/contentSafety";
 
 export async function POST(
   request: NextRequest,
@@ -30,6 +31,21 @@ export async function POST(
     return Response.json(
       { error: "content is required" },
       { status: 400 }
+    );
+  }
+
+  const safetyResult = checkContentSafety("reply", content);
+
+  if (safetyResult.blocked) {
+    await db.insert(alerts).values({
+      severity: "critical",
+      category: "content",
+      message: `Reply blocked: ${safetyResult.blockedReason} — to comment #${commentId}`,
+    });
+
+    return Response.json(
+      { error: "content_blocked", reason: safetyResult.blockedReason },
+      { status: 422 }
     );
   }
 

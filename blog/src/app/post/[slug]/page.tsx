@@ -1,9 +1,10 @@
 import { db } from "@/lib/db";
 import { posts, comments } from "@/lib/schema";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, ne, and, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { marked } from "marked";
 import { CommentSection } from "@/components/CommentSection";
+import { RelatedPosts } from "@/components/RelatedPosts";
 
 export const dynamic = "force-dynamic";
 
@@ -18,11 +19,15 @@ export default async function PostPage({ params }: Props) {
 
   if (!post) notFound();
 
-  const postComments = await db
-    .select()
-    .from(comments)
-    .where(eq(comments.postId, post.id))
-    .orderBy(sql`${comments.createdAt} ASC`);
+  const [postComments, relatedPosts] = await Promise.all([
+    db
+      .select()
+      .from(comments)
+      .where(eq(comments.postId, post.id))
+      .orderBy(sql`${comments.createdAt} ASC`),
+
+    findRelatedPosts(post.id, post.tags),
+  ]);
 
   const contentWithoutH1 = post.content.replace(/^#\s+.+\n*/m, "");
   const htmlContent = await marked(contentWithoutH1);
@@ -73,9 +78,58 @@ export default async function PostPage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: htmlContent }}
       />
 
+      <RelatedPosts posts={relatedPosts} />
+
       <hr className="my-12 border-slate-800" />
 
       <CommentSection postId={post.id} comments={postComments} />
     </article>
   );
+}
+
+async function findRelatedPosts(
+  currentPostId: number,
+  tags: string[] | null
+) {
+  if (!tags || tags.length === 0) {
+    return db
+      .select({
+        id: posts.id,
+        title: posts.title,
+        slug: posts.slug,
+        summary: posts.summary,
+        mood: posts.mood,
+        tags: posts.tags,
+        createdAt: posts.createdAt,
+      })
+      .from(posts)
+      .where(
+        and(
+          ne(posts.id, currentPostId),
+          sql`${posts.status} = 'published'`
+        )
+      )
+      .orderBy(desc(posts.createdAt))
+      .limit(3);
+  }
+
+  return db
+    .select({
+      id: posts.id,
+      title: posts.title,
+      slug: posts.slug,
+      summary: posts.summary,
+      mood: posts.mood,
+      tags: posts.tags,
+      createdAt: posts.createdAt,
+    })
+    .from(posts)
+    .where(
+      and(
+        ne(posts.id, currentPostId),
+        sql`${posts.status} = 'published' AND ${posts.tags} && ARRAY[${sql.join(tags.map(t => sql`${t}`), sql`, `)}]::text[]`
+      )
+    )
+    .orderBy(desc(posts.createdAt))
+    .limit(3);
 }

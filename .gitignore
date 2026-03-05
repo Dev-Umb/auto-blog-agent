@@ -5,4 +5,14 @@ node_modules/
 blog_pgdata/
 openclaw_data/
 openclaw/.env
+openclaw/workspace/workspace/
 blog/.env
+
+# Debug/test artifacts
+*.html
+!blog/src/**/*.html
+api-response*.json
+api-test*.json
+*-check.html
+*-sample.txt
+*-report.md

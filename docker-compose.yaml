@@ -31,6 +31,8 @@ services:
         condition: service_healthy
       llm-proxy:
         condition: service_healthy
+      searxng:
+        condition: service_healthy
     logging:
       driver: "json-file"
       options:
@@ -135,7 +137,37 @@ services:
       -c log_statement=ddl
       -c client_encoding=UTF8
 
-  # ===== LLM Proxy (OpenAI -> Ark model rewrite) =====
+  # ===== SearXNG (Self-hosted Search Engine) =====
+  searxng:
+    image: searxng/searxng:latest
+    restart: unless-stopped
+    volumes:
+      - ./searxng/settings.yml:/etc/searxng/settings.yml:ro
+      - ./searxng/limiter.toml:/etc/searxng/limiter.toml:ro
+    environment:
+      - SEARXNG_BASE_URL=http://searxng:8080/
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+        tag: "searxng"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+        reservations:
+          memory: 128M
+          cpus: "0.1"
+
+  # ===== LLM Proxy (Multi-model router) =====
   llm-proxy:
     build:
       context: ./llm-proxy
@@ -144,6 +176,8 @@ services:
     environment:
       - TARGET_BASE_URL=https://ark.cn-beijing.volces.com/api/v3
       - TARGET_MODEL=doubao-seed-2-0-pro-260215
+      - MODEL_ROUTE_GEMINI={"baseUrl":"https://generativelanguage.googleapis.com/v1beta/openai","model":"gemini-2.0-flash","apiKey":"${GEMINI_API_KEY}"}
+      - MODEL_ROUTE_CLAUDE={"baseUrl":"https://api.anthropic.com/v1","model":"claude-sonnet-4-20250514","apiKey":"${ANTHROPIC_API_KEY}"}
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:4010/health"]
       interval: 10s

@@ -27,7 +27,11 @@ You are executing the **Write Cycle** of the autonomous blog agent. Follow the f
 
 **Goal**: Gather comprehensive material on the topic.
 
-1. Use `web_search` with 5-8 different query angles on the topic:
+1. Search via SearXNG with 5-8 different query angles on the topic (**do NOT use `web_search`, it is disabled**):
+   ```bash
+   exec curl -s "http://searxng:8080/search?q=QUERY&format=json&language=zh-CN" | head -c 50000
+   ```
+   Query angles:
    - The topic itself (Chinese)
    - The topic (English)
    - Related background context
@@ -268,6 +272,13 @@ Read the draft and ask: "Does this sound like ME?"
 
 If persona_match < 7: revise the problematic sections before publishing.
 If any section sounds "teachy" or "newsy": rewrite in casual first person.
+
+## Model Selection Guide
+
+Different stages benefit from different model strengths:
+- **Research**: Use the default model (cost-effective for information gathering)
+- **Feel + Express**: These are the most critical stages. If Gemini 2.5 Pro is available, use it for better creative writing quality
+- **Self-Check**: Use the default model for fact-checking and format verification
 
 ---
 

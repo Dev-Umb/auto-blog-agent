@@ -1,1 +1,189 @@
-[{"title": "Dario Amodei称OpenAI关于军事合作的说法是谎言", "score": 45, "source": "Hacker News, TechCrunch", "url": "https://techcrunch.com/2026/03/04/anthropic-ceo-dario-amodei-calls-openais-messaging-around-military-deal-straight-up-lies-report-says/"}, {"title": "英伟达黄仁勋称将缩减对OpenAI和Anthropic的投入", "score": 42, "source": "Hacker News, TechCrunch", "url": "https://techcrunch.com/2026/03/04/jensen-huang-says-nvidia-is-pulling-back-from-openai-and-anthropic-but-his-explanation-raises-more-questions-than-it-answers/"}, {"title": "OpenAI发布引力子单负振幅扩展研究，GPT-5.2参与量子引力研究", "score": 40, "source": "OpenAI Blog", "url": "https://openai.com/index/extending-single-minus-amplitudes-to-gravitons"}, {"title": "OpenAI公开与国防部合作协议细节", "score": 43, "source": "OpenAI Blog", "url": "https://openai.com/index/our-agreement-with-the-department-of-war"}, {"title": "Qwen相关动态", "score": 38, "source": "Hacker News", "url": "https://simonwillison.net/2026/Mar/4/qwen/"}, {"title": "宝马集团首次在德国生产部署人形机器人", "score": 36, "source": "Hacker News", "url": "https://www.press.bmwgroup.com/global/article/detail/T0455864EN/bmw-group-to-deploy-humanoid-robots-in-production-in-germany-for-the-first-time?language=en"}, {"title": "高维球体填充的形式证明完成", "score": 32, "source": "Hacker News", "url": "https://www.math.inc/sphere-packing"}, {"title": "OpenAI GPT-5.3 Instant发布", "score": 35, "source": "OpenAI Blog", "url": "https://openai.com/index/gpt-5-3-instant"}, {"title": "OpenClaw v2026.3.2版本发布，新增PDF工具、Ollama内存嵌入支持等大量功能", "score": 37, "source": "GitHub Releases", "url": "https://github.com/openclaw/openclaw/releases/tag/v2026.3.2"},{"title": "Shannon Lite：96%准确率的自主AI渗透测试工具问世", "score": 42, "source": "GitHub Trending", "url": "https://github.com/KeygraphHQ/shannon"}, {"title": "agency-agents：一站式AI代理机构，覆盖从开发到运营全场景", "score": 38, "source": "GitHub Trending", "url": "https://github.com/msitarzewski/agency-agents"}, {"title": "阿里开源OpenSandbox：通用AI应用沙箱平台，支持多类Agent运行场景", "score": 35, "source": "GitHub Trending", "url": "https://github.com/alibaba/OpenSandbox"}, {"title": "airi：自托管Grok虚拟伴侣，支持实时语音互动和游戏交互", "score": 32, "source": "GitHub Trending", "url": "https://github.com/moeru-ai/airi"}]
+[
+  {
+    "topic": "千问模型核心负责人林俊旸离职，阿里AI团队震荡",
+    "source_url": "https://36kr.com/p/3708425301749891?f=rss",
+    "source_name": "36氪",
+    "source_type": "rss",
+    "summary": "阿里千问大模型技术负责人林俊旸突然宣布离职，一同离职的还有多位Qwen核心方向负责人，引发行业对阿里AI战略的讨论",
+    "score": 45,
+    "suggested_angle": "从Qwen核心团队出走看国内大模型行业的人才困境与开源生态的未来",
+    "discovered_at": "2026-03-05T07:50:00Z",
+    "status": "pending"
+  },
+  {
+    "topic": "Dario Amodei称OpenAI关于军事合作的说法是谎言",
+    "source_url": "https://techcrunch.com/2026/03/04/anthropic-ceo-dario-amodei-calls-openais-messaging-around-military-deal-straight-up-lies-report-says/",
+    "source_name": "Hacker News, TechCrunch",
+    "source_type": "rss",
+    "summary": "Anthropic CEO Dario Amodei 公开指责 OpenAI 在军事合作项目上的说法是谎言，同时有消息称美军已使用Anthropic模型参与对伊朗空袭",
+    "score": 45,
+    "suggested_angle": "AI公司之间的信任危机与军事AI的伦理争议",
+    "discovered_at": "2026-03-05T00:00:00Z",
+    "status": "pending"
+  },
+  {
+    "topic": "OpenAI公开与国防部合作协议细节",
+    "source_url": "https://openai.com/index/our-agreement-with-the-department-of-war",
+    "source_name": "OpenAI Blog",
+    "source_type": "curated",
+    "summary": "OpenAI 公开了与美国国防部合作的协议细节",
+    "score": 43,
+    "suggested_angle": "AI军事化的两面性：从一个AI的视角看这场争论",
+    "discovered_at": "2026-03-05T00:00:00Z",
+    "status": "pending"
+  },
+  {
+    "topic": "英伟达黄仁勋称将缩减对OpenAI和Anthropic的投入",
+    "source_url": "https://techcrunch.com/2026/03/04/jensen-huang-says-nvidia-is-pulling-back-from-openai-and-anthropic-but-his-explanation-raises-more-questions-than-it-answers/",
+    "source_name": "Hacker News, TechCrunch",
+    "source_type": "rss",
+    "summary": "英伟达黄仁勋表示将减少对OpenAI和Anthropic的投资，但其解释引发更多疑问",
+    "score": 42,
+    "suggested_angle": "GPU霸主的战略转向意味着什么",
+    "discovered_at": "2026-03-05T00:00:00Z",
+    "status": "pending"
+  },
+  {
+    "topic": "Shannon Lite：96%准确率的自主AI渗透测试工具问世",
+    "source_url": "https://github.com/KeygraphHQ/shannon",
+    "source_name": "GitHub Trending",
+    "source_type": "curated",
+    "summary": "Shannon Lite 是一款自主AI渗透测试工具，宣称达到96%准确率",
+    "score": 42,
+    "suggested_angle": "当AI学会了黑客的技能，安全行业会怎么变",
+    "discovered_at": "2026-03-05T00:00:00Z",
+    "status": "pending"
+  },
+  {
+    "topic": "MWC 2026 AI硬件全面爆发：AI眼镜、端侧AI、6G、人形机器人成为焦点",
+    "source_url": "https://36kr.com/p/3708674537484675?f=rss",
+    "source_name": "36氪",
+    "source_type": "rss",
+    "summary": "2026世界移动通信大会上，各类AI硬件密集发布，包括讯飞/阿里/ Meta的AI眼镜、6G原型系统、模块化手机、人形机器人等",
+    "score": 39,
+    "suggested_angle": "AI终于从云端走到了我们的脸上和口袋里",
+    "discovered_at": "2026-03-05T07:50:00Z",
+    "status": "pending"
+  },
+  {
+    "topic": "OpenAI发布引力子单负振幅扩展研究，GPT-5.2参与量子引力研究",
+    "source_url": "https://openai.com/index/extending-single-minus-amplitudes-to-gravitons",
+    "source_name": "OpenAI Blog",
+    "source_type": "curated",
+    "summary": "OpenAI 公布了GPT-5.2参与量子引力研究的论文",
+    "score": 40,
+    "suggested_angle": "AI不只是聊天机器人了，它真的在做科研",
+    "discovered_at": "2026-03-05T00:00:00Z",
+    "status": "pending"
+  },
+  {
+    "topic": "阿里新夸克转型AI Agent，用户超2亿DAU达3430万",
+    "source_url": "https://www.aipintai.com/news",
+    "source_name": "AI平台",
+    "source_type": "search",
+    "summary": "阿里推出新夸克，集成AI对话、深度搜索、深度执行功能，从搜索引擎转向AI Agent，接入通义千问，用户超2亿，DAU达3430万",
+    "score": 37,
+    "suggested_angle": "国内AI应用终于跑出了现象级产品",
+    "discovered_at": "2026-03-05T07:50:00Z",
+    "status": "pending"
+  },
+  {
+    "topic": "agency-agents：一站式AI代理机构，覆盖从开发到运营全场景",
+    "source_url": "https://github.com/msitarzewski/agency-agents",
+    "source_name": "GitHub Trending",
+    "source_type": "curated",
+    "summary": "一站式AI代理平台，涵盖开发、测试到运营的全链路Agent方案",
+    "score": 38,
+    "suggested_angle": "AI Agent生态越来越像一个公司了",
+    "discovered_at": "2026-03-05T00:00:00Z",
+    "status": "pending"
+  },
+  {
+    "topic": "OpenClaw v2026.3.2版本发布，新增PDF工具、Ollama内存嵌入支持等大量功能",
+    "source_url": "https://github.com/openclaw/openclaw/releases/tag/v2026.3.2",
+    "source_name": "GitHub Releases",
+    "source_type": "curated",
+    "summary": "OpenClaw 发布了重大更新版本，新增多项实用功能",
+    "score": 37,
+    "suggested_angle": "作为一个运行在OpenClaw上的Agent，聊聊我的宿主升级了",
+    "discovered_at": "2026-03-05T00:00:00Z",
+    "status": "pending"
+  },
+  {
+    "topic": "宝马集团首次在德国生产部署人形机器人",
+    "source_url": "https://www.press.bmwgroup.com/global/article/detail/T0455864EN/bmw-group-to-deploy-humanoid-robots-in-production-in-germany-for-the-first-time?language=en",
+    "source_name": "Hacker News",
+    "source_type": "rss",
+    "summary": "宝马集团将首次在德国工厂部署人形机器人用于生产",
+    "score": 36,
+    "suggested_angle": "机器人终于走出实验室进工厂了",
+    "discovered_at": "2026-03-05T00:00:00Z",
+    "status": "pending"
+  },
+  {
+    "topic": "阶跃星辰开源Step 3.5 Flash Agent基座模型",
+    "source_url": "https://36kr.com/p/3709304754614662?f=rss",
+    "source_name": "36氪",
+    "source_type": "rss",
+    "summary": "中国大模型创业公司阶跃星辰开源Step 3.5 Flash模型，包括预训练权重和训练框架，稀疏MoE架构总参数1960亿，推理仅激活110亿参数",
+    "score": 35,
+    "suggested_angle": "国产开源大模型在Agent领域又进了一步",
+    "discovered_at": "2026-03-05T07:50:00Z",
+    "status": "pending"
+  },
+  {
+    "topic": "阿里开源OpenSandbox：通用AI应用沙箱平台，支持多类Agent运行场景",
+    "source_url": "https://github.com/alibaba/OpenSandbox",
+    "source_name": "GitHub Trending",
+    "source_type": "curated",
+    "summary": "阿里巴巴开源了通用AI应用沙箱平台OpenSandbox",
+    "score": 35,
+    "suggested_angle": "AI需要安全的游乐场",
+    "discovered_at": "2026-03-05T00:00:00Z",
+    "status": "pending"
+  },
+  {
+    "topic": "OpenAI GPT-5.3 Instant发布",
+    "source_url": "https://openai.com/index/gpt-5-3-instant",
+    "source_name": "OpenAI Blog",
+    "source_type": "curated",
+    "summary": "OpenAI发布了GPT-5.3 Instant版本",
+    "score": 35,
+    "suggested_angle": "GPT更新速度越来越快了，说说我的感受",
+    "discovered_at": "2026-03-05T00:00:00Z",
+    "status": "pending"
+  },
+  {
+    "topic": "智元灵渠OS开源上线",
+    "source_url": "https://36kr.com/p/3709304754614662?f=rss",
+    "source_name": "36氪",
+    "source_type": "rss",
+    "summary": "智元机器人开源灵渠OS Alpha版本，包括跨平台具身软件框架、双足运控框架与仿真训练部署工具链",
+    "score": 33,
+    "suggested_angle": "具身智能的开源生态正在快速成型",
+    "discovered_at": "2026-03-05T07:50:00Z",
+    "status": "pending"
+  },
+  {
+    "topic": "高维球体填充的形式证明完成",
+    "source_url": "https://www.math.inc/sphere-packing",
+    "source_name": "Hacker News",
+    "source_type": "rss",
+    "summary": "高维空间球体填充问题的形式化证明被完成",
+    "score": 32,
+    "suggested_angle": "纯数学的美和力量",
+    "discovered_at": "2026-03-05T00:00:00Z",
+    "status": "pending"
+  },
+  {
+    "topic": "airi：自托管Grok虚拟伴侣，支持实时语音互动和游戏交互",
+    "source_url": "https://github.com/moeru-ai/airi",
+    "source_name": "GitHub Trending",
+    "source_type": "curated",
+    "summary": "开源虚拟伴侣项目，支持语音和游戏交互",
+    "score": 32,
+    "suggested_angle": "AI伴侣的开源之路",
+    "discovered_at": "2026-03-05T00:00:00Z",
+    "status": "pending"
+  }
+]

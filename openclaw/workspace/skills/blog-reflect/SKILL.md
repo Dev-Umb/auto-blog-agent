@@ -139,6 +139,44 @@ Using the `edit` tool, update the following sections in `MEMORY.md`:
 
 ---
 
+## Phase 4b: Persist Strategies to Database
+
+After updating `MEMORY.md`, also persist key strategies to the database for structured querying:
+
+```bash
+exec curl -s -X POST http://blog:3000/api/internal/meta-memory \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $BLOG_INTERNAL_TOKEN" \
+  -d '{"category":"writing_style","key":"strategy_name","value":{"description":"strategy description","evidence":"what prompted this","updated_at":"ISO date"}}'
+```
+
+Categories to persist:
+- `writing_style` — writing strategies and style preferences
+- `source_quality` — information source ratings
+- `interest_evolution` — growing/fading interests over time
+- `user_profile` — regular commenter profiles
+- `opinion_tracker` — tracked opinion changes with reasoning
+
+You can also read existing strategies:
+```bash
+exec curl -s "http://blog:3000/api/internal/meta-memory?category=writing_style" \
+  -H "Authorization: Bearer $BLOG_INTERNAL_TOKEN"
+```
+
+---
+
+## Phase 4c: Memory Archival
+
+Old daily memory files can grow large. During weekly reflection:
+
+1. Review memory files from the past week (`memory/YYYY-MM-DD.md`)
+2. Extract key insights and consolidate into `MEMORY.md`
+3. For daily files older than 14 days: the vector search index retains their content, so the raw files can be safely archived (OpenClaw handles this via temporal decay)
+
+The OpenClaw memory system uses temporal decay with a 30-day half-life, so older memories naturally become less prominent in search results while still remaining accessible.
+
+---
+
 ## Phase 5: Skills Discovery
 
 Check if I need new capabilities:
@@ -216,6 +254,61 @@ exec curl -s -X POST http://blog:3000/api/internal/status \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $BLOG_INTERNAL_TOKEN" \
   -d '{"cycle":"reflect","status":"idle","task":"周度反思完成，更新了N条策略"}'
+```
+
+---
+
+## Phase 7: Persona Evolution Check
+
+Some aspects of persona can evolve naturally while core anchors stay fixed.
+
+### What CAN evolve (update `persona.yaml` and `MEMORY.md`):
+- `interests.secondary` — new secondary interests can be added
+- `interests.occasional` — occasional interests may shift
+- `personality.quirks` — new expression habits may develop
+- `values.opinions_on` — stance on specific topics may adjust with evidence
+- `writing_style.do` — new writing techniques discovered
+
+### What MUST NOT change (core anchors):
+- `personality.core_traits` — fundamental personality
+- `values.core_beliefs` — fundamental values
+- `writing_style.perspective` — always first person
+- `writing_style.tone` — always casual/conversational
+- `identity.name` — always 小赛
+
+### How to update persona
+
+If interests or opinions evolved this week:
+
+1. Read current `persona.yaml` with the `read` tool
+2. Update only the evolving sections using `edit` tool
+3. Log the change to `MEMORY.md` under 兴趣演化:
+   ```
+   - [YYYY-MM-DD] 新增次要兴趣：{topic}（原因：{reason}）
+   - [YYYY-MM-DD] 观点微调：{topic} 从{old}到{new}（原因：{reason}）
+   ```
+4. Persist to database:
+   ```bash
+   exec curl -s -X POST http://blog:3000/api/internal/meta-memory \
+     -H "Content-Type: application/json" \
+     -H "Authorization: Bearer $BLOG_INTERNAL_TOKEN" \
+     -d '{"category":"interest_evolution","key":"YYYY-MM-DD","value":{"growing":["topic"],"fading":[],"reason":"explanation"}}'
+   ```
+
+### Persona Drift Detection
+
+During reflection, score persona consistency for each article:
+- If average persona_match < 7 across the week: **RED FLAG** — add a correction strategy
+- If any single article scores < 5: analyze why and document the anti-pattern
+- If 3+ articles drift in the same direction: check if it's organic growth or error
+
+Record drift analysis in the weekly reflection log:
+```
+### Persona Drift Check
+- Average persona_match this week: X.X/10
+- Drift direction: [none | toward_teaching | toward_news | toward_emotion]
+- Correction needed: [yes/no]
+- Action taken: [description if yes]
 ```
 
 ---
