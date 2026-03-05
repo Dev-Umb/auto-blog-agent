@@ -51,8 +51,8 @@ export function HealthPanel({ initialChecks }: Props) {
 
   return (
     <section className="mb-8">
-      <h2 className="text-lg font-semibold text-white mb-4">系统健康</h2>
-      <div className="p-5 rounded-xl border border-slate-800 bg-slate-900/50">
+      <h2 className="text-lg font-semibold text-[var(--text-main)] mb-4">系统健康</h2>
+      <div className="neu-card p-5 rounded-xl">
         <div className="flex items-center gap-2 mb-4">
           <span
             className={`w-3 h-3 rounded-full ${
@@ -63,7 +63,7 @@ export function HealthPanel({ initialChecks }: Props) {
                 : "bg-red-500 animate-pulse"
             }`}
           />
-          <span className="text-sm text-white font-medium">
+          <span className="text-sm text-[var(--text-main)] font-medium">
             {checks.length === 0
               ? "等待健康检查..."
               : allHealthy
@@ -78,14 +78,14 @@ export function HealthPanel({ initialChecks }: Props) {
             return (
               <div
                 key={check.service}
-                className="flex items-center gap-2 p-2 rounded-lg bg-slate-800/50"
+                className="flex items-center gap-2 p-2 rounded-lg bg-[var(--surface-soft)]"
               >
                 <span className={`w-2 h-2 rounded-full ${style.dot}`} />
-                <span className="text-xs text-slate-300 flex-1">
+                <span className="text-xs text-[var(--text-main)] flex-1">
                   {serviceLabels[check.service] || check.service}
                 </span>
                 {check.responseTimeMs != null && (
-                  <span className="text-[10px] text-slate-500">
+                  <span className="text-[10px] text-[var(--text-muted)]">
                     {check.responseTimeMs}ms
                   </span>
                 )}
@@ -95,7 +95,7 @@ export function HealthPanel({ initialChecks }: Props) {
         </div>
 
         {checks.length > 0 && checks[0].checkedAt && (
-          <p className="text-[10px] text-slate-600 mt-3">
+          <p className="text-[10px] text-[var(--text-muted)] mt-3">
             最后检查：{new Date(checks[0].checkedAt).toLocaleString("zh-CN")}
           </p>
         )}

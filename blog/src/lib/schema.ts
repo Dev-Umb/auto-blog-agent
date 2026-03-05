@@ -111,6 +111,19 @@ export const alerts = pgTable("alerts", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
+export const systemSettings = pgTable(
+  "system_settings",
+  {
+    id: serial("id").primaryKey(),
+    key: text("key").notNull(),
+    value: jsonb("value").notNull(),
+    version: integer("version").default(1),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [uniqueIndex("idx_system_settings_key").on(table.key)]
+);
+
 export type Post = typeof posts.$inferSelect;
 export type NewPost = typeof posts.$inferInsert;
 export type Comment = typeof comments.$inferSelect;
@@ -119,3 +132,4 @@ export type AgentStatus = typeof agentStatus.$inferSelect;
 export type TokenUsage = typeof tokenUsage.$inferSelect;
 export type SystemHealth = typeof systemHealth.$inferSelect;
 export type Alert = typeof alerts.$inferSelect;
+export type SystemSetting = typeof systemSettings.$inferSelect;

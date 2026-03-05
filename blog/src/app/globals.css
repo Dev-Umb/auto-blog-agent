@@ -1,6 +1,67 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+:root,
+[data-theme="paper"] {
+  --bg-main: #f4efe4;
+  --bg-elevated: #f9f5ec;
+  --surface-raised: #f7f1e4;
+  --surface-soft: #f1e8d7;
+  --border-subtle: #d9ceb8;
+  --text-main: #3f3526;
+  --text-muted: #7f705a;
+  --shadow-light: rgba(255, 255, 255, 0.65);
+  --shadow-dark: rgba(128, 110, 78, 0.25);
+}
+
+[data-theme="neo"] {
+  --bg-main: #0b1020;
+  --bg-elevated: #141b31;
+  --surface-raised: #1d2744;
+  --surface-soft: #131c34;
+  --border-subtle: #2a385f;
+  --text-main: #e8eefc;
+  --text-muted: #9fb0d8;
+  --shadow-light: rgba(255, 255, 255, 0.08);
+  --shadow-dark: rgba(0, 0, 0, 0.45);
+}
+
+.app-bg {
+  background:
+    radial-gradient(circle at top left, rgba(255, 181, 207, 0.12), transparent 35%),
+    radial-gradient(circle at top right, rgba(136, 133, 255, 0.12), transparent 30%),
+    var(--bg-main);
+}
+
+.neu-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  box-shadow:
+    8px 8px 16px var(--shadow-dark),
+    -6px -6px 14px var(--shadow-light);
+}
+
+.neu-input {
+  background: var(--surface-soft);
+  border: 1px solid var(--border-subtle);
+  box-shadow:
+    inset 3px 3px 6px var(--shadow-dark),
+    inset -2px -2px 5px var(--shadow-light);
+}
+
+.neu-button {
+  box-shadow:
+    6px 6px 12px var(--shadow-dark),
+    -4px -4px 9px var(--shadow-light);
+}
+
+.neu-button:active {
+  transform: translateY(1px);
+  box-shadow:
+    inset 3px 3px 6px var(--shadow-dark),
+    inset -2px -2px 5px var(--shadow-light);
+}
+
 .prose mark {
   background: transparent;
   color: #f87171;
@@ -8,7 +69,7 @@
 }
 
 .prose strong {
-  color: #e2e8f0;
+  color: var(--text-main);
 }
 
 @keyframes fade-in {
@@ -29,6 +90,15 @@
   animation: pulse-dot 2s ease-in-out infinite;
 }
 
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+.animate-shimmer {
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
 .stagger-1 { animation-delay: 0.05s; }
 .stagger-2 { animation-delay: 0.1s; }
 .stagger-3 { animation-delay: 0.15s; }
@@ -44,10 +114,10 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: color-mix(in oklab, var(--text-muted), transparent 55%);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: color-mix(in oklab, var(--text-muted), transparent 35%);
 }

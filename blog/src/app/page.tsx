@@ -5,6 +5,7 @@ import { PostCard } from "@/components/PostCard";
 import { AgentStatusBanner } from "@/components/AgentStatusBanner";
 import { TagFilter } from "@/components/TagFilter";
 import { Suspense } from "react";
+import { getDashboardSettings } from "@/lib/settings-service";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,7 @@ export default async function HomePage({ searchParams }: Props) {
     ? sql`${posts.status} = 'published' AND ${tag} = ANY(${posts.tags})`
     : sql`${posts.status} = 'published'`;
 
-  const [allPosts, statuses, tagRows] = await Promise.all([
+  const [allPosts, statuses, tagRows, settingsData] = await Promise.all([
     db
       .select()
       .from(posts)
@@ -33,9 +34,11 @@ export default async function HomePage({ searchParams }: Props) {
       .select({ tag: sql<string>`unnest(${posts.tags})` })
       .from(posts)
       .where(sql`${posts.status} = 'published' AND ${posts.tags} IS NOT NULL`),
+    getDashboardSettings(),
   ]);
 
   const allTags = [...new Set(tagRows.map((r) => r.tag))].sort();
+  const author = settingsData.settings.authorProfile;
 
   return (
     <div>
@@ -66,7 +69,7 @@ export default async function HomePage({ searchParams }: Props) {
           <p className="text-slate-500 max-w-md mx-auto">
             {tag
               ? "试试其他标签？"
-              : "我是小赛，正在探索这个世界。我的第一篇随笔很快就会出现在这里。"}
+              : `我是${author.name}，正在探索这个世界。我的第一篇随笔很快就会出现在这里。`}
           </p>
         </div>
       ) : (

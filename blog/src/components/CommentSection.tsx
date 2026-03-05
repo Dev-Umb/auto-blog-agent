@@ -3,6 +3,9 @@
 import type { Comment } from "@/lib/schema";
 import { useState, useCallback } from "react";
 import { useSSE } from "@/lib/useSSE";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Props {
   postId: number;
@@ -64,36 +67,35 @@ export function CommentSection({
 
   return (
     <section>
-      <h2 className="text-xl font-semibold text-white mb-6">
+      <h2 className="text-xl font-semibold text-[var(--text-main)] mb-6">
         聊聊天 ({allComments.length})
       </h2>
 
       <form onSubmit={handleSubmit} className="mb-8">
         <div className="mb-3">
-          <input
+          <Input
             type="text"
             placeholder="你的名字"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-4 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none"
           />
         </div>
         <div className="mb-3">
-          <textarea
+          <Textarea
             placeholder="说点什么..."
             rows={3}
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="w-full px-4 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none resize-none"
+            className="resize-none"
           />
         </div>
-        <button
+        <Button
           type="submit"
           disabled={submitting || !name.trim() || !content.trim()}
-          className="px-6 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          variant="primary"
         >
           {submitting ? "发送中..." : "发送"}
-        </button>
+        </Button>
       </form>
 
       <div className="space-y-4">
@@ -127,7 +129,7 @@ function CommentItem({ comment }: { comment: Comment }) {
       className={`p-4 rounded-lg ${
         comment.isAgent
           ? "bg-purple-500/5 border border-purple-500/20"
-          : "bg-slate-900 border border-slate-800"
+          : "neu-card"
       }`}
     >
       <div className="flex items-center gap-2 mb-2 text-sm">
@@ -140,7 +142,7 @@ function CommentItem({ comment }: { comment: Comment }) {
           className={
             comment.isAgent
               ? "font-medium text-purple-400"
-              : "font-medium text-slate-300"
+              : "font-medium text-[var(--text-main)]"
           }
         >
           {comment.authorName}
@@ -150,9 +152,9 @@ function CommentItem({ comment }: { comment: Comment }) {
             博主
           </span>
         )}
-        <span className="text-slate-600">{date}</span>
+        <span className="text-[var(--text-muted)]">{date}</span>
       </div>
-      <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">
+      <p className="text-[var(--text-main)] text-sm leading-relaxed whitespace-pre-wrap">
         {comment.content}
       </p>
     </div>

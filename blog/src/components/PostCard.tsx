@@ -38,9 +38,9 @@ export function PostCard({ post, index = 0 }: Props) {
     <article className={`group animate-fade-in ${staggerClass}`}>
       <Link
         href={`/post/${post.slug}`}
-        className="block p-6 rounded-xl border border-slate-800 hover:border-purple-500/30 bg-slate-900/50 hover:bg-slate-900 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/5"
+        className="neu-card block p-6 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/10"
       >
-        <div className="flex items-center gap-3 mb-3 text-sm text-slate-500 flex-wrap">
+        <div className="flex items-center gap-3 mb-3 text-sm text-[var(--text-muted)] flex-wrap">
           <time>{date}</time>
           {post.readTime && (
             <span className="hidden sm:inline">{post.readTime} 分钟阅读</span>
@@ -54,12 +54,12 @@ export function PostCard({ post, index = 0 }: Props) {
           )}
         </div>
 
-        <h2 className="text-xl font-semibold text-white group-hover:text-purple-400 transition-colors duration-200 mb-2 leading-snug">
+        <h2 className="text-xl font-semibold text-[var(--text-main)] group-hover:text-purple-500 transition-colors duration-200 mb-2 leading-snug">
           {post.title}
         </h2>
 
         {post.summary && (
-          <p className="text-slate-400 text-sm leading-relaxed mb-3 line-clamp-2">
+          <p className="text-[var(--text-muted)] text-sm leading-relaxed mb-3 line-clamp-2">
             {post.summary}
           </p>
         )}
@@ -69,7 +69,7 @@ export function PostCard({ post, index = 0 }: Props) {
             {post.tags.map((tag) => (
               <span
                 key={tag}
-                className="text-xs px-2 py-1 rounded bg-slate-800/80 text-slate-400 group-hover:bg-slate-800 transition-colors"
+                className="text-xs px-2 py-1 rounded bg-[var(--surface-soft)] text-[var(--text-muted)] transition-colors"
               >
                 {tag}
               </span>

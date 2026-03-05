@@ -52,33 +52,33 @@ export function AgentStatusBanner({ statuses: initialStatuses }: Props) {
   if (!activeStatus && statuses.length === 0) return null;
 
   return (
-    <div className="mb-8 p-4 rounded-xl border border-slate-800 bg-gradient-to-r from-slate-900/80 to-slate-900/50 animate-fade-in">
+    <div className="mb-8 p-4 rounded-xl neu-card animate-fade-in">
       <div className="flex items-center gap-3 text-sm">
         <div className="relative">
           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xs">
             赛
           </div>
           {activeStatus && (
-            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-blue-400 rounded-full border-2 border-slate-900 animate-pulse-dot" />
+            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-blue-400 rounded-full border-2 border-[var(--surface-raised)] animate-pulse-dot" />
           )}
           {!activeStatus && (
-            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-slate-900" />
+            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-[var(--surface-raised)]" />
           )}
         </div>
         {activeStatus ? (
-          <span className="text-slate-300">
+          <span className="text-[var(--text-main)]">
             小赛正在
             <span className="text-purple-400 font-medium">
               {cycleLabels[activeStatus.cycleName] || activeStatus.cycleName}
             </span>
             {activeStatus.currentTask && (
-              <span className="text-slate-400">
+              <span className="text-[var(--text-muted)]">
                 ：{activeStatus.currentTask}
               </span>
             )}
           </span>
         ) : (
-          <span className="text-slate-500">小赛在线，等待下一次探索</span>
+          <span className="text-[var(--text-muted)]">小赛在线，等待下一次探索</span>
         )}
       </div>
     </div>

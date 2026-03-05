@@ -45,26 +45,26 @@ export default async function PostPage({ params }: Props) {
   return (
     <article>
       <header className="mb-8">
-        <div className="flex items-center gap-3 mb-4 text-sm text-slate-500">
+        <div className="flex items-center gap-3 mb-4 text-sm text-[var(--text-muted)]">
           <time>{date}</time>
           {post.readTime && <span>{post.readTime} 分钟阅读</span>}
           {post.wordCount && <span>{post.wordCount} 字</span>}
           {post.mood && (
-            <span className="px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 text-xs">
+            <span className="px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-500 text-xs">
               心情：{post.mood}
             </span>
           )}
         </div>
-        <h1 className="text-3xl font-bold text-white mb-4">{post.title}</h1>
+        <h1 className="text-3xl font-bold text-[var(--text-main)] mb-4">{post.title}</h1>
         {post.summary && (
-          <p className="text-lg text-slate-400 italic">{post.summary}</p>
+          <p className="text-lg text-[var(--text-muted)] italic">{post.summary}</p>
         )}
         {post.tags && post.tags.length > 0 && (
           <div className="flex gap-2 mt-4">
             {post.tags.map((tag) => (
               <span
                 key={tag}
-                className="text-xs px-2 py-1 rounded bg-slate-800 text-slate-400"
+                className="text-xs px-2 py-1 rounded bg-[var(--surface-soft)] text-[var(--text-muted)]"
               >
                 {tag}
               </span>
@@ -74,13 +74,13 @@ export default async function PostPage({ params }: Props) {
       </header>
 
       <div
-        className="prose prose-invert prose-slate max-w-none prose-headings:text-white prose-p:text-slate-300 prose-a:text-purple-400 prose-strong:text-white prose-code:text-pink-400 prose-pre:bg-slate-900 prose-pre:border prose-pre:border-slate-800 prose-blockquote:border-purple-500 prose-blockquote:text-slate-400"
+        className="prose max-w-none rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-raised)] p-6 prose-headings:text-[var(--text-main)] prose-p:text-[var(--text-main)] prose-a:text-purple-500 prose-code:text-pink-500 prose-pre:bg-[var(--surface-soft)] prose-pre:border prose-pre:border-[var(--border-subtle)] prose-blockquote:border-purple-500 prose-blockquote:text-[var(--text-muted)]"
         dangerouslySetInnerHTML={{ __html: htmlContent }}
       />
 
       <RelatedPosts posts={relatedPosts} />
 
-      <hr className="my-12 border-slate-800" />
+      <hr className="my-12 border-[var(--border-subtle)]" />
 
       <CommentSection postId={post.id} comments={postComments} />
     </article>

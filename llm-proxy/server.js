@@ -1,16 +1,20 @@
 const http = require("http");
+const { readFileSync } = require("fs");
 
 const PORT = Number(process.env.PORT || 4010);
+const ROUTES_FILE = process.env.LLM_PROXY_ROUTES_PATH || "/app/routes.json";
+const ADMIN_TOKEN = process.env.LLM_PROXY_ADMIN_TOKEN || "";
 
-const MODEL_ROUTES = buildModelRoutes();
+let MODEL_ROUTES = buildModelRoutes();
 
 function buildModelRoutes() {
   const routes = {};
 
   if (process.env.TARGET_BASE_URL) {
-    routes["default"] = {
+    routes.default = {
       baseUrl: process.env.TARGET_BASE_URL,
       model: process.env.TARGET_MODEL || "doubao-seed-2-0-pro-260215",
+      match: "default",
     };
   }
 
@@ -24,6 +28,7 @@ function buildModelRoutes() {
           baseUrl: parsed.baseUrl,
           model: parsed.model,
           apiKey: parsed.apiKey,
+          match: match[1].toLowerCase(),
         };
       } catch {
         console.warn(`[llm-proxy] Failed to parse ${key}: ${value}`);
@@ -31,27 +36,56 @@ function buildModelRoutes() {
     }
   }
 
-  if (!routes["default"]) {
-    routes["default"] = {
+  try {
+    const raw = readFileSync(ROUTES_FILE, "utf-8");
+    const parsed = JSON.parse(raw);
+    if (parsed && parsed.routes && typeof parsed.routes === "object") {
+      for (const [key, value] of Object.entries(parsed.routes)) {
+        if (!value || typeof value !== "object") continue;
+        const route = value;
+        routes[key.toLowerCase()] = {
+          baseUrl: route.baseUrl,
+          model: route.model,
+          apiKey: route.apiKey,
+          apiKeyEnv: route.apiKeyEnv,
+          match: (route.match || key).toLowerCase(),
+        };
+      }
+    }
+  } catch {
+    // Ignore missing/invalid routes file and keep env defaults.
+  }
+
+  if (!routes.default) {
+    routes.default = {
       baseUrl: "https://ark.cn-beijing.volces.com/api/v3",
       model: "doubao-seed-2-0-pro-260215",
+      match: "default",
     };
   }
 
   return routes;
 }
 
+function routeApiKey(route) {
+  if (route.apiKey) return route.apiKey;
+  if (route.apiKeyEnv && process.env[route.apiKeyEnv]) return process.env[route.apiKeyEnv];
+  return "";
+}
+
 function resolveRoute(requestedModel) {
-  if (!requestedModel) return MODEL_ROUTES["default"];
+  if (!requestedModel) return MODEL_ROUTES.default;
 
   const lower = requestedModel.toLowerCase();
 
   for (const [routeKey, route] of Object.entries(MODEL_ROUTES)) {
     if (routeKey === "default") continue;
+    const matchKey = (route.match || routeKey || "").toLowerCase();
+    if (matchKey && lower.includes(matchKey)) return route;
     if (lower.includes(routeKey)) return route;
   }
 
-  return MODEL_ROUTES["default"];
+  return MODEL_ROUTES.default;
 }
 
 function json(res, status, body) {
@@ -67,6 +101,20 @@ async function readBody(req) {
 
 const server = http.createServer(async (req, res) => {
   try {
+    if (req.url === "/admin/reload" && req.method === "POST") {
+      if (!ADMIN_TOKEN) return json(res, 500, { error: "admin_token_missing" });
+      if (req.headers.authorization !== `Bearer ${ADMIN_TOKEN}`) {
+        return json(res, 401, { error: "unauthorized" });
+      }
+      MODEL_ROUTES = buildModelRoutes();
+      return json(res, 200, {
+        ok: true,
+        routes: Object.fromEntries(
+          Object.entries(MODEL_ROUTES).map(([k, v]) => [k, { model: v.model, baseUrl: v.baseUrl }])
+        ),
+      });
+    }
+
     if (req.url === "/health") {
       return json(res, 200, {
         ok: true,
@@ -106,8 +154,9 @@ const server = http.createServer(async (req, res) => {
     delete headers.host;
     headers["content-length"] = Buffer.byteLength(bodyToSend || "").toString();
 
-    if (route.apiKey) {
-      headers["authorization"] = `Bearer ${route.apiKey}`;
+    const key = routeApiKey(route);
+    if (key) {
+      headers["authorization"] = `Bearer ${key}`;
     }
 
     const upstream = await fetch(targetUrl, {

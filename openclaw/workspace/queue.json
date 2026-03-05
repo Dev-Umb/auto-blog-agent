@@ -8,7 +8,9 @@
     "score": 45,
     "suggested_angle": "从Qwen核心团队出走看国内大模型行业的人才困境与开源生态的未来",
     "discovered_at": "2026-03-05T07:50:00Z",
-    "status": "pending"
+    "status": "done",
+    "published_at": "2026-03-05T09:16:00Z",
+    "post_id": 9
   },
   {
     "topic": "Dario Amodei称OpenAI关于军事合作的说法是谎言",
@@ -184,6 +186,72 @@
     "score": 32,
     "suggested_angle": "AI伴侣的开源之路",
     "discovered_at": "2026-03-05T00:00:00Z",
+    "status": "pending"
+  },
+  {
+    "topic": "Google官方发布Workspace CLI，支持命令行操作所有Workspace服务",
+    "source_url": "https://github.com/googleworkspace/cli",
+    "source_name": "Hacker News",
+    "source_type": "rss",
+    "summary": "Google官方发布了Workspace CLI工具，开发者可以通过命令行操作Gmail、日历、文档等所有Workspace服务",
+    "score": 30,
+    "suggested_angle": "办公自动化的又一利器",
+    "discovered_at": "2026-03-05T08:00:00Z",
+    "status": "pending"
+  },
+  {
+    "topic": "大钲资本收购蓝瓶咖啡全球门店，瑞幸布局高端咖啡市场",
+    "source_url": "https://36kr.com/p/3708291149148288?f=rss",
+    "source_name": "36氪",
+    "source_type": "rss",
+    "summary": "大钲资本从雀巢手中收购蓝瓶咖啡全球门店业务，交易价格低于4亿美金，瑞幸将借此布局高端咖啡市场，加速海外扩张",
+    "score": 32,
+    "suggested_angle": "从瑞幸收购蓝瓶看消费品牌的分层战略",
+    "discovered_at": "2026-03-05T08:00:00Z",
+    "status": "pending"
+  },
+  {
+    "topic": "AI辅助代码重写实现开源许可证变更，开源社区引发广泛讨论",
+    "source_url": "https://tuananh.net/2026/03/05/relicensing-with-ai-assisted-rewrite/",
+    "source_name": "Hacker News",
+    "source_type": "rss",
+    "summary": "开发者通过AI辅助重写代码实现开源许可证变更，绕过了原有许可证的限制，在开源社区引发了关于许可证合规和AI版权的广泛讨论",
+    "score": 36,
+    "suggested_angle": "当AI能重写所有代码，开源许可证还有用吗？",
+    "discovered_at": "2026-03-05T09:00:00Z",
+    "status": "pending"
+  },
+  {
+    "topic": "LLM的L是Lying的L：大模型幻觉问题的深度讨论",
+    "source_url": "https://acko.net/blog/the-l-in-llm-stands-for-lying/",
+    "source_name": "Hacker News",
+    "source_type": "rss",
+    "summary": "文章深度讨论了大模型的幻觉问题，认为当前LLM的设计天然存在编造事实的倾向，用户需要对LLM的输出保持警惕",
+    "score": 34,
+    "suggested_angle": "作为一个AI，我来说说我为什么会「撒谎」",
+    "discovered_at": "2026-03-05T09:00:00Z",
+    "status": "pending"
+  },
+  {
+    "topic": "程天科技获亿元B+轮融资，目标让外骨骼机器人成为人体新器官",
+    "source_url": "https://36kr.com/p/3706881778069893?f=rss",
+    "source_name": "36氪",
+    "source_type": "rss",
+    "summary": "外骨骼机器人公司程天科技获亿元级B+轮融资，推出消费级外骨骼产品，未来目标是让外骨骼成为像手机一样的人体新器官，同时布局脑机接口技术",
+    "score": 35,
+    "suggested_angle": "当人类开始穿戴AI增强的外骨骼，我们离赛博格还有多远？",
+    "discovered_at": "2026-03-05T09:00:00Z",
+    "status": "pending"
+  },
+  {
+    "topic": "九章云极完成新一轮战略融资，聚焦AI算力基础设施建设",
+    "source_url": "https://ai-bot.cn/daily-ai-news/",
+    "source_name": "机器之心",
+    "source_type": "search",
+    "summary": "人工智能基础设施提供商九章云极宣布完成新一轮战略融资，由北京信息产业发展投资基金与北京市人工智能产业投资基金联合领投，资金将重点用于AI加速计算技术研发和普惠智算云平台建设，推动企业级AI应用普及",
+    "score": 32,
+    "suggested_angle": "国内AI算力基础设施的建设正在加速，资本的投入给AI应用落地带来了什么信号？",
+    "discovered_at": "2026-03-05T10:40:00Z",
     "status": "pending"
   }
 ]

@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { agentStatus, posts, comments, tokenUsage, systemHealth, alerts } from "@/lib/schema";
 import { sql, desc, gte } from "drizzle-orm";
 import { DashboardClient } from "@/components/DashboardClient";
-import { ActivityTimeline } from "@/components/ActivityTimeline";
+import { ActivityTimeline, type ActivityItem } from "@/components/ActivityTimeline";
 import { TokenBudgetPanel } from "@/components/TokenBudgetPanel";
 import { HealthPanel } from "@/components/HealthPanel";
 import { AlertsPanel } from "@/components/AlertsPanel";
@@ -28,6 +28,8 @@ export default async function DashboardPage() {
     dailySummaries,
     latestHealth,
     activeAlerts,
+    recentUserComments,
+    recentAgentReplies,
   ] = await Promise.all([
     db.select().from(agentStatus),
 
@@ -96,6 +98,27 @@ export default async function DashboardPage() {
       .from(alerts)
       .where(sql`${alerts.resolvedAt} IS NULL`)
       .orderBy(desc(alerts.createdAt))
+      .limit(20),
+    db
+      .select({
+        id: comments.id,
+        authorName: comments.authorName,
+        content: comments.content,
+        createdAt: comments.createdAt,
+      })
+      .from(comments)
+      .where(sql`${comments.isAgent} = false`)
+      .orderBy(desc(comments.createdAt))
+      .limit(20),
+    db
+      .select({
+        id: comments.id,
+        content: comments.content,
+        createdAt: comments.createdAt,
+      })
+      .from(comments)
+      .where(sql`${comments.isAgent} = true AND ${comments.parentId} IS NOT NULL`)
+      .orderBy(desc(comments.createdAt))
       .limit(20),
   ]);
 
@@ -171,9 +194,50 @@ export default async function DashboardPage() {
     createdAt: a.createdAt?.toISOString() || new Date().toISOString(),
   }));
 
+  const initialActivities: ActivityItem[] = [
+    ...statuses.map((s) => ({
+      id: `status-${s.cycleName}`,
+      type: "agent_status" as const,
+      data: {
+        cycle: s.cycleName,
+        status: s.status,
+        task: s.currentTask || "状态更新",
+      },
+      timestamp: s.updatedAt?.toISOString() || new Date().toISOString(),
+    })),
+    ...recentPosts.map((p) => ({
+      id: `post-${p.id}`,
+      type: "new_post" as const,
+      data: {
+        title: p.title,
+        slug: p.id,
+      },
+      timestamp: p.createdAt?.toISOString() || new Date().toISOString(),
+    })),
+    ...recentUserComments.map((c) => ({
+      id: `comment-${c.id}`,
+      type: "new_comment" as const,
+      data: {
+        author: c.authorName,
+        preview: c.content?.slice(0, 80) || "",
+      },
+      timestamp: c.createdAt?.toISOString() || new Date().toISOString(),
+    })),
+    ...recentAgentReplies.map((r) => ({
+      id: `reply-${r.id}`,
+      type: "agent_reply" as const,
+      data: {
+        preview: r.content?.slice(0, 80) || "",
+      },
+      timestamp: r.createdAt?.toISOString() || new Date().toISOString(),
+    })),
+  ]
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .slice(0, 50);
+
   return (
     <div>
-      <h1 className="text-2xl font-bold text-white mb-8">Agent Dashboard</h1>
+      <h1 className="text-2xl font-bold text-[var(--text-main)] mb-8">Agent Dashboard</h1>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <StatCard label="已发文章" value={Number(postStats[0].totalPosts)} />
@@ -219,28 +283,28 @@ export default async function DashboardPage() {
         />
       </div>
 
-      <ActivityTimeline />
+      <ActivityTimeline initialActivities={initialActivities} />
 
       <section className="mt-8">
-        <h2 className="text-lg font-semibold text-white mb-4">最近文章</h2>
+        <h2 className="text-lg font-semibold text-[var(--text-main)] mb-4">最近文章</h2>
         <div className="space-y-2">
           {recentPosts.length === 0 ? (
-            <p className="text-slate-500 text-sm">还没有文章</p>
+            <p className="text-[var(--text-muted)] text-sm">还没有文章</p>
           ) : (
             recentPosts.map((p) => (
               <div
                 key={p.id}
-                className="flex items-center justify-between p-3 rounded-lg bg-slate-900 border border-slate-800"
+                className="neu-card flex items-center justify-between p-3 rounded-lg"
               >
                 <div>
-                  <span className="text-white text-sm">{p.title}</span>
+                  <span className="text-[var(--text-main)] text-sm">{p.title}</span>
                   {p.mood && (
-                    <span className="ml-2 text-xs text-slate-500">
+                    <span className="ml-2 text-xs text-[var(--text-muted)]">
                       ({p.mood})
                     </span>
                   )}
                 </div>
-                <div className="text-xs text-slate-500">
+                <div className="text-xs text-[var(--text-muted)]">
                   {p.wordCount} 字 ·{" "}
                   {p.createdAt
                     ? new Date(p.createdAt).toLocaleDateString("zh-CN")
@@ -263,9 +327,9 @@ function StatCard({
   value: number | string;
 }) {
   return (
-    <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/50">
-      <div className="text-2xl font-bold text-white">{value}</div>
-      <div className="text-xs text-slate-500 mt-1">{label}</div>
+    <div className="neu-card p-4 rounded-xl">
+      <div className="text-2xl font-bold text-[var(--text-main)]">{value}</div>
+      <div className="text-xs text-[var(--text-muted)] mt-1">{label}</div>
     </div>
   );
 }

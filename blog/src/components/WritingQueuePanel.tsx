@@ -59,17 +59,17 @@ export function WritingQueuePanel({
   ).length;
 
   return (
-    <section className="rounded-xl border border-slate-800 bg-slate-900/50 p-5">
+    <section className="neu-card rounded-xl p-5">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-white">写作队列</h2>
-        <div className="flex items-center gap-2 text-xs text-slate-500">
+        <h2 className="text-lg font-semibold text-[var(--text-main)]">写作队列</h2>
+        <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
           <span>{pendingItems.length} 待写</span>
           <span>·</span>
           <span>{doneCount} 已完成</span>
         </div>
       </div>
 
-      <div className="flex items-center gap-3 mb-5 p-3 rounded-lg bg-slate-800/60 border border-slate-700/50">
+      <div className="flex items-center gap-3 mb-5 p-3 rounded-lg bg-[var(--surface-soft)] border border-[var(--border-subtle)]">
         <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-purple-500/20">
           <svg
             className="w-4 h-4 text-purple-400"
@@ -86,18 +86,18 @@ export function WritingQueuePanel({
           </svg>
         </div>
         <div>
-          <p className="text-sm text-white">
+          <p className="text-sm text-[var(--text-main)]">
             下次写作：
             <span className="text-purple-400 font-medium ml-1">
               {formatTime(nextRun, timezone)}
             </span>
           </p>
-          <p className="text-xs text-slate-500">{relativeTime}</p>
+          <p className="text-xs text-[var(--text-muted)]">{relativeTime}</p>
         </div>
       </div>
 
       {pendingItems.length === 0 ? (
-        <p className="text-sm text-slate-500 text-center py-4">
+        <p className="text-sm text-[var(--text-muted)] text-center py-4">
           队列为空，等待探索循环发现新主题
         </p>
       ) : (
@@ -108,7 +108,7 @@ export function WritingQueuePanel({
               className={`p-3 rounded-lg border ${
                 idx === 0
                   ? "bg-purple-500/10 border-purple-500/30"
-                  : "bg-slate-800/40 border-slate-700/30"
+                  : "bg-[var(--surface-soft)] border-[var(--border-subtle)]"
               }`}
             >
               <div className="flex items-start justify-between gap-2">
@@ -119,16 +119,16 @@ export function WritingQueuePanel({
                         NEXT
                       </span>
                     )}
-                    <span className="text-sm text-white font-medium truncate">
+                    <span className="text-sm text-[var(--text-main)] font-medium truncate">
                       {item.topic}
                     </span>
                   </div>
                   {item.summary && (
-                    <p className="text-xs text-slate-500 line-clamp-2 mb-1.5">
+                    <p className="text-xs text-[var(--text-muted)] line-clamp-2 mb-1.5">
                       {item.summary}
                     </p>
                   )}
-                  <div className="flex items-center gap-2 text-[11px] text-slate-600">
+                  <div className="flex items-center gap-2 text-[11px] text-[var(--text-muted)]">
                     {item.source_name && <span>{item.source_name}</span>}
                     {item.discovered_at && (
                       <>
@@ -157,7 +157,7 @@ export function WritingQueuePanel({
                 </span>
               </div>
               {item.suggested_angle && (
-                <p className="text-xs text-slate-500 mt-2 pt-2 border-t border-slate-700/30 italic">
+                <p className="text-xs text-[var(--text-muted)] mt-2 pt-2 border-t border-[var(--border-subtle)] italic">
                   {item.suggested_angle}
                 </p>
               )}

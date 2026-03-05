@@ -97,6 +97,15 @@ CREATE TABLE IF NOT EXISTS alerts (
     created_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS system_settings (
+    id              SERIAL PRIMARY KEY,
+    key             TEXT NOT NULL UNIQUE,
+    value           JSONB NOT NULL,
+    version         INT DEFAULT 1,
+    created_at      TIMESTAMPTZ DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Indexes for common queries
 CREATE INDEX IF NOT EXISTS idx_posts_status_created ON posts(status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_posts_slug ON posts(slug);
@@ -107,6 +116,7 @@ CREATE INDEX IF NOT EXISTS idx_agent_status_cycle ON agent_status(cycle_name);
 CREATE INDEX IF NOT EXISTS idx_token_usage_date ON token_usage(date DESC);
 CREATE INDEX IF NOT EXISTS idx_system_health_service ON system_health(service, checked_at DESC);
 CREATE INDEX IF NOT EXISTS idx_alerts_unresolved ON alerts(severity, acknowledged) WHERE resolved_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_system_settings_key ON system_settings(key);
 
 -- Insert default persona
 INSERT INTO persona (name, config) VALUES (

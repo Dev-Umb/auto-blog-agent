@@ -51,10 +51,10 @@ export function AlertsPanel({ initialAlerts }: Props) {
 
   return (
     <section className="mb-8">
-      <h2 className="text-lg font-semibold text-white mb-4">
+      <h2 className="text-lg font-semibold text-[var(--text-main)] mb-4">
         告警
         {alerts.length > 0 && (
-          <span className="ml-2 text-xs font-normal text-slate-500">
+          <span className="ml-2 text-xs font-normal text-[var(--text-muted)]">
             ({alerts.length} 条未解决)
           </span>
         )}
@@ -74,11 +74,11 @@ export function AlertsPanel({ initialAlerts }: Props) {
                   <span className="text-xs text-slate-400 uppercase font-medium">
                     {alert.category}
                   </span>
-                  <span className="text-[10px] text-slate-600">
+                  <span className="text-[10px] text-[var(--text-muted)]">
                     {new Date(alert.createdAt).toLocaleString("zh-CN")}
                   </span>
                 </div>
-                <p className="text-sm text-slate-200 mt-0.5">
+                <p className="text-sm text-[var(--text-main)] mt-0.5">
                   {alert.message}
                 </p>
               </div>

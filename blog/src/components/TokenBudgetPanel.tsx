@@ -53,25 +53,25 @@ export function TokenBudgetPanel({ initialBudget, initialDaily }: Props) {
 
   return (
     <section className="mb-8">
-      <h2 className="text-lg font-semibold text-white mb-4">Token 预算</h2>
+      <h2 className="text-lg font-semibold text-[var(--text-main)] mb-4">Token 预算</h2>
 
-      <div className="p-5 rounded-xl border border-slate-800 bg-slate-900/50">
+      <div className="neu-card p-5 rounded-xl">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <span className={`text-sm font-medium ${mode.color}`}>
               {mode.label}
             </span>
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-[var(--text-muted)]">
               ${(budget.todayCostCents / 100).toFixed(2)} / $
               {(budget.dailyLimitCents / 100).toFixed(2)}
             </span>
           </div>
-          <span className="text-sm text-slate-400">
+          <span className="text-sm text-[var(--text-muted)]">
             {budget.usagePercent.toFixed(1)}%
           </span>
         </div>
 
-        <div className="h-3 rounded-full bg-slate-800 overflow-hidden">
+        <div className="h-3 rounded-full bg-[var(--surface-soft)] overflow-hidden">
           <div
             className={`h-full rounded-full transition-all duration-500 ${
               budget.budgetMode === "exceeded"
@@ -86,22 +86,22 @@ export function TokenBudgetPanel({ initialBudget, initialDaily }: Props) {
 
         <div className="grid grid-cols-2 gap-4 mt-4">
           <div>
-            <div className="text-xs text-slate-500">今日 Token</div>
-            <div className="text-sm text-white font-medium">
+            <div className="text-xs text-[var(--text-muted)]">今日 Token</div>
+            <div className="text-sm text-[var(--text-main)] font-medium">
               {budget.todayTokens.toLocaleString()}
             </div>
           </div>
           <div>
-            <div className="text-xs text-slate-500">今日花费</div>
-            <div className="text-sm text-white font-medium">
+            <div className="text-xs text-[var(--text-muted)]">今日花费</div>
+            <div className="text-sm text-[var(--text-main)] font-medium">
               ${(budget.todayCostCents / 100).toFixed(4)}
             </div>
           </div>
         </div>
 
         {daily.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-slate-800">
-            <div className="text-xs text-slate-500 mb-2">近 7 天趋势</div>
+          <div className="mt-4 pt-4 border-t border-[var(--border-subtle)]">
+            <div className="text-xs text-[var(--text-muted)] mb-2">近 7 天趋势</div>
             <div className="flex items-end gap-1 h-16">
               {daily.slice(0, 7).reverse().map((d) => {
                 const height = Math.max(
@@ -121,7 +121,7 @@ export function TokenBudgetPanel({ initialBudget, initialDaily }: Props) {
                       }`}
                       style={{ height: `${Math.min(height, 100)}%` }}
                     />
-                    <span className="text-[10px] text-slate-600">
+                    <span className="text-[10px] text-[var(--text-muted)]">
                       {d.date.slice(5)}
                     </span>
                   </div>

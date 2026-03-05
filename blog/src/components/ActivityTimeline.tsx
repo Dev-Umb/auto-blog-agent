@@ -3,11 +3,15 @@
 import { useCallback, useState } from "react";
 import { useSSE } from "@/lib/useSSE";
 
-interface Activity {
+export interface ActivityItem {
   id: string;
   type: "agent_status" | "new_post" | "new_comment" | "agent_reply";
   data: Record<string, unknown>;
-  timestamp: Date;
+  timestamp: string;
+}
+
+interface Props {
+  initialActivities?: ActivityItem[];
 }
 
 const cycleIcons: Record<string, { icon: string; label: string }> = {
@@ -24,7 +28,7 @@ const typeLabels: Record<string, { icon: string; label: string }> = {
   agent_reply: { icon: "🤖", label: "回复了评论" },
 };
 
-function getActivityInfo(activity: Activity): { icon: string; label: string } {
+function getActivityInfo(activity: ActivityItem): { icon: string; label: string } {
   if (activity.type === "agent_status") {
     const cycle = activity.data.cycle as string;
     return cycleIcons[cycle] || typeLabels.agent_status;
@@ -32,18 +36,18 @@ function getActivityInfo(activity: Activity): { icon: string; label: string } {
   return typeLabels[activity.type] || { icon: "⚪", label: activity.type };
 }
 
-export function ActivityTimeline() {
-  const [activities, setActivities] = useState<Activity[]>([]);
+export function ActivityTimeline({ initialActivities = [] }: Props) {
+  const [activities, setActivities] = useState<ActivityItem[]>(initialActivities);
 
   const makeHandler = useCallback(
-    (type: Activity["type"]) => (data: Record<string, unknown>) => {
+    (type: ActivityItem["type"]) => (data: Record<string, unknown>) => {
       setActivities((prev) =>
         [
           {
             id: `${type}-${Date.now()}`,
             type,
             data,
-            timestamp: new Date(),
+            timestamp: new Date().toISOString(),
           },
           ...prev,
         ].slice(0, 50)
@@ -59,7 +63,7 @@ export function ActivityTimeline() {
     { event: "agent_reply", handler: makeHandler("agent_reply") },
   ]);
 
-  function formatActivity(activity: Activity): string {
+  function formatActivity(activity: ActivityItem): string {
     const { type, data } = activity;
     switch (type) {
       case "agent_status": {
@@ -80,10 +84,10 @@ export function ActivityTimeline() {
 
   return (
     <section className="mt-8">
-      <h2 className="text-lg font-semibold text-white mb-4">活动日志</h2>
+      <h2 className="text-lg font-semibold text-[var(--text-main)] mb-4">活动日志</h2>
 
       {activities.length === 0 ? (
-        <p className="text-slate-500 text-sm p-4 rounded-lg bg-slate-900 border border-slate-800">
+        <p className="text-[var(--text-muted)] text-sm p-4 rounded-lg neu-card">
           等待活动...连接到 SSE 事件流中
         </p>
       ) : (
@@ -93,17 +97,17 @@ export function ActivityTimeline() {
             return (
               <div
                 key={activity.id}
-                className="flex items-start gap-3 p-3 rounded-lg bg-slate-900 border border-slate-800"
+                className="flex items-start gap-3 p-3 rounded-lg neu-card"
               >
                 <span className="text-sm mt-0.5">{info.icon}</span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-500">{info.label}</span>
-                    <span className="text-xs text-slate-600">
-                      {activity.timestamp.toLocaleTimeString("zh-CN")}
+                    <span className="text-xs text-[var(--text-muted)]">{info.label}</span>
+                    <span className="text-xs text-[var(--text-muted)]">
+                      {new Date(activity.timestamp).toLocaleTimeString("zh-CN")}
                     </span>
                   </div>
-                  <p className="text-sm text-slate-300 truncate">
+                  <p className="text-sm text-[var(--text-main)] truncate">
                     {formatActivity(activity)}
                   </p>
                 </div>

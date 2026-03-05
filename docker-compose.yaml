@@ -7,6 +7,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./openclaw/workspace:/root/.openclaw/workspace
+      - ./openclaw/openclaw.json:/openclaw-config/openclaw.json:ro
       - openclaw_data:/root/.openclaw/data
       - openclaw_cron:/root/.openclaw/cron
       - ./scripts:/scripts:ro
@@ -20,6 +21,9 @@ services:
       - BLOG_INTERNAL_TOKEN=${BLOG_INTERNAL_TOKEN}
     ports:
       - "18789:18789"
+    command: >
+      sh -c "cp /openclaw-config/openclaw.json /root/.openclaw/openclaw.json &&
+      openclaw gateway --allow-unconfigured --bind lan --port 18789"
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:18789/health"]
       interval: 30s
@@ -55,7 +59,9 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     volumes:
-      - ./openclaw/workspace:/openclaw-workspace:ro
+      - ./openclaw/workspace:/openclaw-workspace
+      - ./openclaw/openclaw.json:/openclaw-config/openclaw.json
+      - ./llm-proxy/routes.json:/llm-proxy-config/routes.json
     environment:
       - DATABASE_URL=postgresql://blog:${BLOG_PG_PASSWORD}@blog-db:5432/blog?client_encoding=utf8
       - BLOG_INTERNAL_TOKEN=${BLOG_INTERNAL_TOKEN}
@@ -64,6 +70,12 @@ services:
       - DAILY_TOKEN_BUDGET_CENTS=${DAILY_TOKEN_BUDGET_CENTS:-200}
       - ALERT_WEBHOOK_URL=${ALERT_WEBHOOK_URL:-}
       - QUEUE_PATH=/openclaw-workspace/queue.json
+      - OPENCLAW_CONFIG_PATH=/openclaw-config/openclaw.json
+      - LLM_PROXY_ROUTES_PATH=/llm-proxy-config/routes.json
+      - OPENCLAW_PERSONA_PATH=/openclaw-workspace/persona.yaml
+      - OPENCLAW_SOURCES_PATH=/openclaw-workspace/skills/blog-explore/sources.yaml
+      - OPS_CONTROL_URL=http://ops-control:4020/ops/restart
+      - OPS_CONTROL_TOKEN=${OPS_CONTROL_TOKEN}
       - NODE_ENV=production
       - HOSTNAME=0.0.0.0
     ports:
@@ -77,6 +89,8 @@ services:
     depends_on:
       blog-db:
         condition: service_healthy
+      ops-control:
+        condition: service_started
     logging:
       driver: "json-file"
       options:
@@ -173,11 +187,13 @@ services:
       context: ./llm-proxy
       dockerfile: Dockerfile
     restart: unless-stopped
+    volumes:
+      - ./llm-proxy/routes.json:/app/routes.json
     environment:
       - TARGET_BASE_URL=https://ark.cn-beijing.volces.com/api/v3
       - TARGET_MODEL=doubao-seed-2-0-pro-260215
-      - MODEL_ROUTE_GEMINI={"baseUrl":"https://generativelanguage.googleapis.com/v1beta/openai","model":"gemini-2.0-flash","apiKey":"${GEMINI_API_KEY}"}
-      - MODEL_ROUTE_CLAUDE={"baseUrl":"https://api.anthropic.com/v1","model":"claude-sonnet-4-20250514","apiKey":"${ANTHROPIC_API_KEY}"}
+      - LLM_PROXY_ROUTES_PATH=/app/routes.json
+      - LLM_PROXY_ADMIN_TOKEN=${LLM_PROXY_ADMIN_TOKEN}
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:4010/health"]
       interval: 10s
@@ -190,6 +206,25 @@ services:
         max-size: "20m"
         max-file: "3"
         tag: "llm-proxy"
+
+  # ===== Ops Control (safe service restart) =====
+  ops-control:
+    build:
+      context: ./ops-control
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      - OPS_CONTROL_TOKEN=${OPS_CONTROL_TOKEN}
+      - DOCKER_COMPOSE_FILE=/repo/docker-compose.yaml
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./:/repo:ro
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:4020/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
 volumes:
   openclaw_data:

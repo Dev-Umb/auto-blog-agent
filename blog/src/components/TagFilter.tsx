@@ -28,7 +28,7 @@ export function TagFilter({ allTags }: Props) {
         className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
           !activeTag
             ? "bg-purple-500/20 border-purple-500/50 text-purple-300"
-            : "bg-slate-900/50 border-slate-800 text-slate-400 hover:border-slate-700"
+            : "bg-[var(--surface-raised)] border-[var(--border-subtle)] text-[var(--text-muted)]"
         }`}
       >
         全部
@@ -40,7 +40,7 @@ export function TagFilter({ allTags }: Props) {
           className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
             activeTag === tag
               ? "bg-purple-500/20 border-purple-500/50 text-purple-300"
-              : "bg-slate-900/50 border-slate-800 text-slate-400 hover:border-slate-700"
+              : "bg-[var(--surface-raised)] border-[var(--border-subtle)] text-[var(--text-muted)]"
           }`}
         >
           {tag}
