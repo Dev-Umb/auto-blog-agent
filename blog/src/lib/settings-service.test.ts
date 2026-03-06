@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   applySettingsToOpenClaw,
+  buildMcpClientsConfig,
+  buildMcpRegistry,
   buildLlmProxyRoutes,
   buildPersonaYaml,
   buildSearchGroups,
+  buildSkillsRegistry,
   buildSourcesYaml,
 } from "@/lib/settings-sync";
 import { getDefaultSettings } from "@/lib/settings-config";
@@ -26,27 +29,59 @@ describe("settings-service transforms", () => {
     expect(next.agents.defaults.model).toBe("gemini/gemini-2.0-flash");
   });
 
-  it("builds llm proxy routes from dashboard settings", () => {
+  it("builds llm proxy routes from enabled providers", () => {
     const settings = getDefaultSettings();
-    settings.modelConfig.routes = [
+    settings.modelConfig.providers = [
       {
         key: "test",
-        match: "my-model",
+        enabled: true,
         baseUrl: "https://example.com",
-        model: "foo-1",
+        api: "openai-completions",
+        apiKey: "sk-test",
         apiKeyEnv: "OPENAI_API_KEY",
+        models: [
+          {
+            id: "foo-1",
+            name: "Foo 1",
+            contextWindow: 128000,
+            maxTokens: 4096,
+          },
+        ],
       },
     ];
+    settings.modelConfig.activeProvider = "test";
+    settings.modelConfig.activeModel = "foo-1";
+    settings.modelConfig.defaultModel = "test/foo-1";
 
     const result = buildLlmProxyRoutes(settings);
     expect(result.routes).toEqual({
+      default: {
+        baseUrl: "https://example.com",
+        model: "foo-1",
+        apiKey: "sk-test",
+        apiKeyEnv: "OPENAI_API_KEY",
+        match: "default",
+      },
       test: {
         baseUrl: "https://example.com",
         model: "foo-1",
+        apiKey: "sk-test",
         apiKeyEnv: "OPENAI_API_KEY",
-        match: "my-model",
+        match: "test",
       },
     });
+  });
+
+  it("prefers direct apiKey in openclaw provider config", () => {
+    const settings = getDefaultSettings();
+    settings.modelConfig.providers[0].apiKey = "sk-direct-provider-key";
+    settings.modelConfig.providers[0].apiKeyEnv = undefined;
+    const next = applySettingsToOpenClaw({}, settings) as {
+      models: {
+        providers: Record<string, { apiKey: string }>;
+      };
+    };
+    expect(next.models.providers.ark.apiKey).toBe("sk-direct-provider-key");
   });
 
   it("builds persona yaml from author profile", () => {
@@ -57,16 +92,12 @@ describe("settings-service transforms", () => {
     expect(yaml).toContain("writing_style:");
   });
 
-  it("handles empty raw config and lowercases route match", () => {
+  it("handles empty raw config and builds provider-based route key", () => {
     const settings = getDefaultSettings();
-    settings.modelConfig.routes = [
-      {
-        key: "UPPER",
-        match: "MyModel",
-        baseUrl: "https://up.example.com",
-        model: "x1",
-      },
-    ];
+    settings.modelConfig.providers[0].key = "UPPER";
+    settings.modelConfig.activeProvider = "UPPER";
+    settings.modelConfig.activeModel = settings.modelConfig.providers[0].models[0].id;
+    settings.modelConfig.defaultModel = `UPPER/${settings.modelConfig.activeModel}`;
 
     const openclaw = applySettingsToOpenClaw(null, settings) as {
       agents: { defaults: { model: string } };
@@ -74,9 +105,9 @@ describe("settings-service transforms", () => {
     };
     const routes = buildLlmProxyRoutes(settings);
 
-    expect(openclaw.models.providers).toHaveProperty("ark");
+    expect(openclaw.models.providers).toHaveProperty("UPPER");
     expect(openclaw.agents.defaults.model).toContain("/");
-    expect(routes.routes.upper.match).toBe("mymodel");
+    expect(routes.routes.upper.match).toBe("upper");
   });
 
   it("includes content_focus in persona yaml for enabled directions", () => {
@@ -168,5 +199,27 @@ describe("settings-service transforms", () => {
     const yaml = buildSourcesYaml(settings);
     expect(yaml).toContain("search_groups:");
     expect(yaml).not.toContain("rss_feeds:");
+  });
+
+  it("builds skills registry with active skills", () => {
+    const settings = getDefaultSettings();
+    settings.skillsConfig.items[0].enabled = false;
+    const registry = buildSkillsRegistry(settings);
+    expect(registry.items.length).toBe(settings.skillsConfig.items.length);
+    expect(registry.activeSkills).not.toContain(settings.skillsConfig.items[0].id);
+  });
+
+  it("builds mcp clients config and registry payload", () => {
+    const settings = getDefaultSettings();
+    settings.mcpConfig.enabled = true;
+    const clients = buildMcpClientsConfig(settings);
+    const registry = buildMcpRegistry(settings);
+    expect(clients.enabled).toBe(true);
+    expect(clients.clients.length).toBe(settings.mcpConfig.clients.length);
+    expect(registry.installed.length).toBe(settings.mcpConfig.registry.installed.length);
+    expect(registry.available_registry.length).toBe(
+      settings.mcpConfig.registry.availableRegistry.length
+    );
+    expect(registry.whitelist_sources.length).toBeGreaterThan(0);
   });
 });

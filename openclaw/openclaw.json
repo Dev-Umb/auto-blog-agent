@@ -7,7 +7,7 @@
   "models": {
     "providers": {
       "ark": {
-        "baseUrl": "https://ark.cn-beijing.volces.com/api/v3",
+        "baseUrl": "http://llm-proxy:4010/api/v3",
         "api": "openai-completions",
         "apiKey": "${OPENAI_API_KEY}",
         "models": [
@@ -20,9 +20,9 @@
         ]
       },
       "gemini": {
-        "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai",
+        "baseUrl": "http://llm-proxy:4010/api/v3",
         "api": "openai-completions",
-        "apiKey": "${GEMINI_API_KEY}",
+        "apiKey": "${OPENAI_API_KEY}",
         "models": [
           {
             "id": "gemini-2.0-flash",
@@ -31,13 +31,26 @@
             "maxTokens": 8192
           }
         ]
+      },
+      "lkeap": {
+        "baseUrl": "http://llm-proxy:4010/api/v3",
+        "api": "openai-completions",
+        "apiKey": "${OPENAI_API_KEY}",
+        "models": [
+          {
+            "id": "glm-5",
+            "name": "GLM-5",
+            "contextWindow": 128000,
+            "maxTokens": 4096
+          }
+        ]
       }
     }
   },
   "agents": {
     "defaults": {
       "workspace": "./workspace",
-      "model": "ark/doubao-seed-2-0-pro-260215",
+      "model": "lkeap/glm-5",
       "memorySearch": {
         "provider": "gemini",
         "model": "gemini-embedding-001",

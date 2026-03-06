@@ -91,6 +91,8 @@ export function DashboardClient({
   const [writeMessage, setWriteMessage] = useState("");
   const [triggering, setTriggering] = useState(false);
   const autoResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const progressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastProgressRef = useRef(0);
 
   const handleStatus = useCallback((data: Record<string, unknown>) => {
     setStatuses((prev) => {
@@ -121,6 +123,7 @@ export function DashboardClient({
     if (data.cycle === "write") {
       const task = (data.task as string) || "";
       const status = data.status as string;
+      lastProgressRef.current = Date.now();
       setWriteMessage(task);
 
       if (status === "idle" || status === "error") {
@@ -144,6 +147,7 @@ export function DashboardClient({
   const handleWriteTriggerEvent = useCallback((data: Record<string, unknown>) => {
     const stage = data.stage as string;
     const msg = (data.message as string) || "";
+    lastProgressRef.current = Date.now();
     setWriteMessage(msg);
     if (stage === "triggering") setWriteStage("triggering");
     else if (stage === "triggered") setWriteStage("triggered");
@@ -167,9 +171,52 @@ export function DashboardClient({
     return () => clearInterval(timer);
   }, []);
 
+  const PROGRESS_TIMEOUT_MS = 120_000;
+
+  useEffect(() => {
+    if (progressTimer.current) clearTimeout(progressTimer.current);
+
+    const isNonTerminal =
+      writeStage !== "idle" &&
+      writeStage !== "done" &&
+      writeStage !== "empty_queue" &&
+      writeStage !== "error";
+
+    if (isNonTerminal) {
+      lastProgressRef.current = Date.now();
+
+      const checkTimeout = () => {
+        const elapsed = Date.now() - lastProgressRef.current;
+        if (elapsed >= PROGRESS_TIMEOUT_MS) {
+          setWriteStage("error");
+          setWriteMessage(
+            "写作超时：超过 2 分钟未收到 Agent 进度更新，请检查设置是否已「保存并应用」、Agent 服务是否正常运行"
+          );
+          if (autoResetTimer.current) clearTimeout(autoResetTimer.current);
+          autoResetTimer.current = setTimeout(() => {
+            setWriteStage("idle");
+            setWriteMessage("");
+          }, 15000);
+        } else {
+          progressTimer.current = setTimeout(
+            checkTimeout,
+            PROGRESS_TIMEOUT_MS - elapsed + 1000
+          );
+        }
+      };
+
+      progressTimer.current = setTimeout(checkTimeout, PROGRESS_TIMEOUT_MS);
+    }
+
+    return () => {
+      if (progressTimer.current) clearTimeout(progressTimer.current);
+    };
+  }, [writeStage]);
+
   useEffect(() => {
     return () => {
       if (autoResetTimer.current) clearTimeout(autoResetTimer.current);
+      if (progressTimer.current) clearTimeout(progressTimer.current);
     };
   }, []);
 
@@ -178,12 +225,16 @@ export function DashboardClient({
     setTriggering(true);
     setWriteStage("triggering");
     setWriteMessage("正在发送写作指令…");
+    lastProgressRef.current = Date.now();
     try {
       const res = await fetch("/api/dashboard/trigger-write", { method: "POST" });
       const data = await res.json();
       if (!res.ok) {
         setWriteStage("error");
         setWriteMessage(data.message || "触发失败");
+      } else {
+        setWriteStage("triggered");
+        setWriteMessage(data.message || "写作指令已发送，等待 Agent 开始执行…");
       }
     } catch (err) {
       setWriteStage("error");

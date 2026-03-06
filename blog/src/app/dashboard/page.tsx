@@ -124,6 +124,8 @@ export default async function DashboardPage() {
 
   const queuePath =
     process.env.QUEUE_PATH || "/root/.openclaw/workspace/queue.json";
+  const compatQueuePath =
+    process.env.QUEUE_COMPAT_PATH || "/openclaw-workspace/workspace/queue.json";
   let queueItems: Array<{
     topic: string;
     source_url?: string;
@@ -135,23 +137,7 @@ export default async function DashboardPage() {
     discovered_at?: string;
     status: string;
   }> = [];
-  try {
-    const raw = await readFile(queuePath, "utf-8");
-    const rawItems = JSON.parse(raw) as Array<Record<string, unknown>>;
-    queueItems = rawItems.map((item) => ({
-      topic: (item.topic || item.title || "") as string,
-      source_url: (item.source_url || item.url || "") as string,
-      source_name: (item.source_name || item.source || "") as string,
-      source_type: (item.source_type || "") as string,
-      summary: (item.summary || "") as string,
-      score: (item.score || 0) as number,
-      suggested_angle: (item.suggested_angle || "") as string,
-      discovered_at: (item.discovered_at || "") as string,
-      status: (item.status || "pending") as string,
-    }));
-  } catch {
-    // queue.json not found or invalid — treat as empty
-  }
+  queueItems = await readQueueItems([queuePath, compatQueuePath]);
 
   const todayCost = Number(todayTokens[0]?.totalCost || 0);
   const todayTotalTokens = Number(todayTokens[0]?.totalTokens || 0);
@@ -317,6 +303,45 @@ export default async function DashboardPage() {
       </section>
     </div>
   );
+}
+
+async function readQueueItems(paths: string[]) {
+  let fallback: Array<{
+    topic: string;
+    source_url?: string;
+    source_name?: string;
+    source_type?: string;
+    summary?: string;
+    score: number;
+    suggested_angle?: string;
+    discovered_at?: string;
+    status: string;
+  }> = [];
+
+  for (const path of paths) {
+    try {
+      const raw = await readFile(path, "utf-8");
+      const rawItems = JSON.parse(raw) as Array<Record<string, unknown>>;
+      const normalized = rawItems.map((item) => ({
+        topic: (item.topic || item.title || "") as string,
+        source_url: (item.source_url || item.url || "") as string,
+        source_name: (item.source_name || item.source || "") as string,
+        source_type: (item.source_type || "") as string,
+        summary: (item.summary || "") as string,
+        score: (item.score || 0) as number,
+        suggested_angle: (item.suggested_angle || "") as string,
+        discovered_at: (item.discovered_at || "") as string,
+        status: (item.status || "pending") as string,
+      }));
+
+      if (normalized.length > 0) return normalized;
+      fallback = normalized;
+    } catch {
+      // try next candidate
+    }
+  }
+
+  return fallback;
 }
 
 function StatCard({

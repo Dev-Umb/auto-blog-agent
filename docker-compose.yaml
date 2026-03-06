@@ -23,6 +23,7 @@ services:
       - "18789:18789"
     command: >
       sh -c "cp /openclaw-config/openclaw.json /root/.openclaw/openclaw.json &&
+      /usr/local/bin/init-workspace.sh &&
       openclaw gateway --allow-unconfigured --bind lan --port 18789"
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:18789/health"]
@@ -70,10 +71,12 @@ services:
       - DAILY_TOKEN_BUDGET_CENTS=${DAILY_TOKEN_BUDGET_CENTS:-200}
       - ALERT_WEBHOOK_URL=${ALERT_WEBHOOK_URL:-}
       - QUEUE_PATH=/openclaw-workspace/queue.json
+      - QUEUE_COMPAT_PATH=/openclaw-workspace/workspace/queue.json
       - OPENCLAW_CONFIG_PATH=/openclaw-config/openclaw.json
       - LLM_PROXY_ROUTES_PATH=/llm-proxy-config/routes.json
       - OPENCLAW_PERSONA_PATH=/openclaw-workspace/persona.yaml
       - OPENCLAW_SOURCES_PATH=/openclaw-workspace/skills/blog-explore/sources.yaml
+      - OPENCLAW_WORKSPACE_COMPAT_ROOT=/openclaw-workspace/workspace
       - OPS_CONTROL_URL=http://ops-control:4020/ops/restart
       - OPS_CONTROL_TOKEN=${OPS_CONTROL_TOKEN}
       - NODE_ENV=production
@@ -194,6 +197,8 @@ services:
       - TARGET_MODEL=doubao-seed-2-0-pro-260215
       - LLM_PROXY_ROUTES_PATH=/app/routes.json
       - LLM_PROXY_ADMIN_TOKEN=${LLM_PROXY_ADMIN_TOKEN}
+      - BLOG_INTERNAL_TOKEN=${BLOG_INTERNAL_TOKEN}
+      - BLOG_ALERTS_URL=http://blog:3000/api/internal/alerts
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:4010/health"]
       interval: 10s

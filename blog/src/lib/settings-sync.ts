@@ -3,14 +3,80 @@ import type { DashboardSettings } from "@/lib/settings-config";
 export interface LlmProxyRouteRecord {
   baseUrl: string;
   model: string;
+  apiKey?: string;
   apiKeyEnv?: string;
   match: string;
+}
+
+export interface SkillsRegistryRecord {
+  generatedAt: string;
+  activeSkills: string[];
+  items: Array<{
+    id: string;
+    name: string;
+    enabled: boolean;
+    entry: string;
+    scheduleRef?: string;
+    source: {
+      type: string;
+      uri: string;
+      version?: string;
+      trustLevel?: string;
+    };
+  }>;
+  importSources: Array<{
+    name: string;
+    type: string;
+    uri: string;
+    enabled: boolean;
+    whitelistPattern?: string;
+  }>;
+  lastSyncAt?: string;
+}
+
+export interface McpClientsConfigRecord {
+  enabled: boolean;
+  generatedAt: string;
+  clients: Array<{
+    id: string;
+    name: string;
+    enabled: boolean;
+    transport: string;
+    endpoint?: string;
+    command?: string;
+    args: string[];
+    env: Record<string, string>;
+    capabilities: string[];
+    timeoutMs: number;
+    authRef?: string;
+  }>;
+}
+
+export interface McpRegistryRecord {
+  generatedAt: string;
+  installed: Array<{
+    name: string;
+    package: string;
+    transport: string;
+    installed_at: string;
+    status: string;
+  }>;
+  available_registry: Array<{
+    name: string;
+    description: string;
+    package: string;
+    trust_level: string;
+  }>;
+  whitelist_sources: string[];
 }
 
 export function applySettingsToOpenClaw(
   rawOpenClawConfig: unknown,
   settings: DashboardSettings
 ) {
+  const llmProxyUrl =
+    process.env.LLM_PROXY_INTERNAL_URL || "http://llm-proxy:4010/api/v3";
+
   const source =
     rawOpenClawConfig && typeof rawOpenClawConfig === "object"
       ? (rawOpenClawConfig as Record<string, unknown>)
@@ -20,9 +86,9 @@ export function applySettingsToOpenClaw(
     settings.modelConfig.providers.map((provider) => [
       provider.key,
       {
-        baseUrl: provider.baseUrl,
+        baseUrl: llmProxyUrl,
         api: provider.api,
-        apiKey: `\${${provider.apiKeyEnv}}`,
+        apiKey: "${OPENAI_API_KEY}",
         models: provider.models.map((model) => ({
           id: model.id,
           name: model.name,
@@ -62,15 +128,119 @@ export function applySettingsToOpenClaw(
 
 export function buildLlmProxyRoutes(settings: DashboardSettings) {
   const routes: Record<string, LlmProxyRouteRecord> = {};
-  settings.modelConfig.routes.forEach((route) => {
-    routes[route.key.toLowerCase()] = {
-      baseUrl: route.baseUrl,
-      model: route.model,
-      apiKeyEnv: route.apiKeyEnv,
-      match: route.match.toLowerCase(),
+
+  const activeProvider = settings.modelConfig.providers.find(
+    (provider) => provider.key === settings.modelConfig.activeProvider
+  );
+  if (activeProvider) {
+    routes.default = {
+      baseUrl: activeProvider.baseUrl,
+      model: settings.modelConfig.activeModel,
+      apiKey: activeProvider.apiKey,
+      apiKeyEnv: activeProvider.apiKeyEnv,
+      match: "default",
     };
-  });
+  }
+
+  settings.modelConfig.providers
+    .filter((provider) => provider.enabled)
+    .forEach((provider) => {
+      const model =
+        provider.key === settings.modelConfig.activeProvider
+          ? settings.modelConfig.activeModel
+          : provider.models[0]?.id || settings.modelConfig.activeModel;
+      routes[provider.key.toLowerCase()] = {
+        baseUrl: provider.baseUrl,
+        model,
+        apiKey: provider.apiKey,
+        apiKeyEnv: provider.apiKeyEnv,
+        match: provider.key.toLowerCase(),
+      };
+    });
+
+  if (!routes.default) {
+    const first = settings.modelConfig.providers[0];
+    if (first) {
+      routes.default = {
+        baseUrl: first.baseUrl,
+        model: first.models[0]?.id || settings.modelConfig.activeModel,
+        apiKey: first.apiKey,
+        apiKeyEnv: first.apiKeyEnv,
+        match: "default",
+      };
+    }
+  }
   return { routes };
+}
+
+export function buildSkillsRegistry(settings: DashboardSettings): SkillsRegistryRecord {
+  return {
+    generatedAt: new Date().toISOString(),
+    activeSkills: settings.skillsConfig.items
+      .filter((item) => item.enabled)
+      .map((item) => item.id),
+    items: settings.skillsConfig.items.map((item) => ({
+      id: item.id,
+      name: item.name,
+      enabled: item.enabled,
+      entry: item.entry,
+      scheduleRef: item.scheduleRef,
+      source: {
+        type: item.source.type,
+        uri: item.source.uri,
+        version: item.source.version,
+        trustLevel: item.source.trustLevel,
+      },
+    })),
+    importSources: settings.skillsConfig.importSources.map((source) => ({
+      name: source.name,
+      type: source.type,
+      uri: source.uri,
+      enabled: source.enabled,
+      whitelistPattern: source.whitelistPattern,
+    })),
+    lastSyncAt: settings.skillsConfig.lastSyncAt,
+  };
+}
+
+export function buildMcpClientsConfig(settings: DashboardSettings): McpClientsConfigRecord {
+  return {
+    enabled: settings.mcpConfig.enabled,
+    generatedAt: new Date().toISOString(),
+    clients: settings.mcpConfig.clients.map((client) => ({
+      id: client.id,
+      name: client.name,
+      enabled: client.enabled,
+      transport: client.transport,
+      endpoint: client.endpoint,
+      command: client.command,
+      args: [...client.args],
+      env: { ...client.env },
+      capabilities: [...client.capabilities],
+      timeoutMs: client.timeoutMs,
+      authRef: client.authRef,
+    })),
+  };
+}
+
+export function buildMcpRegistry(settings: DashboardSettings): McpRegistryRecord {
+  return {
+    generatedAt: new Date().toISOString(),
+    installed: settings.mcpConfig.registry.installed.map((item) => ({
+      name: item.name,
+      package: item.package,
+      transport: item.transport,
+      installed_at: item.installedAt,
+      status: item.status,
+    })),
+    available_registry: settings.mcpConfig.registry.availableRegistry.map((item) => ({
+      name: item.name,
+      description: item.description,
+      package: item.package,
+      trust_level: item.trustLevel,
+    })),
+    whitelist_sources: [...settings.mcpConfig.registry.whitelistSources],
+  };
 }
 
 function yamlEscape(str: string): string {

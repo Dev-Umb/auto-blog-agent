@@ -4,6 +4,9 @@ const { readFileSync } = require("fs");
 const PORT = Number(process.env.PORT || 4010);
 const ROUTES_FILE = process.env.LLM_PROXY_ROUTES_PATH || "/app/routes.json";
 const ADMIN_TOKEN = process.env.LLM_PROXY_ADMIN_TOKEN || "";
+const BLOG_ALERTS_URL =
+  process.env.BLOG_ALERTS_URL || "http://blog:3000/api/internal/alerts";
+const BLOG_INTERNAL_TOKEN = process.env.BLOG_INTERNAL_TOKEN || "";
 
 let MODEL_ROUTES = buildModelRoutes();
 
@@ -88,6 +91,68 @@ function resolveRoute(requestedModel) {
   return MODEL_ROUTES.default;
 }
 
+// --- Upstream error alerting with dedup ---
+const ALERT_COOLDOWN_MS = 5 * 60 * 1000;
+const recentAlerts = new Map();
+
+function alertKey(status, routeMatch) {
+  return `${status}:${routeMatch}`;
+}
+
+function shouldAlert(status, routeMatch) {
+  const key = alertKey(status, routeMatch);
+  const last = recentAlerts.get(key);
+  if (last && Date.now() - last < ALERT_COOLDOWN_MS) return false;
+  recentAlerts.set(key, Date.now());
+  return true;
+}
+
+function reportUpstreamError(upstreamStatus, route, model, errorSnippet) {
+  if (!BLOG_INTERNAL_TOKEN) return;
+  if (!shouldAlert(upstreamStatus, route.match || "default")) return;
+
+  const severity = upstreamStatus === 403 || upstreamStatus === 401 ? "error" : "warning";
+  const statusHints = {
+    401: "API Key 无效或已过期",
+    403: "账户欠费或权限不足",
+    429: "请求频率超限",
+    500: "服务端内部错误",
+    502: "上游网关错误",
+    503: "服务暂时不可用",
+  };
+  const hint = statusHints[upstreamStatus] || `HTTP ${upstreamStatus}`;
+  const message = `LLM 调用失败 [${hint}]：模型 ${model}，路由 ${route.match || "default"}（${route.baseUrl}）`;
+
+  fetch(BLOG_ALERTS_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${BLOG_INTERNAL_TOKEN}`,
+    },
+    body: JSON.stringify({
+      severity,
+      category: "llm_error",
+      message,
+      details: {
+        upstreamStatus,
+        model,
+        routeKey: route.match || "default",
+        baseUrl: route.baseUrl,
+        errorSnippet: (errorSnippet || "").slice(0, 500),
+      },
+    }),
+  }).catch((err) => {
+    console.error("[llm-proxy] Failed to send alert:", err.message);
+  });
+}
+
+setInterval(() => {
+  const cutoff = Date.now() - ALERT_COOLDOWN_MS;
+  for (const [key, ts] of recentAlerts) {
+    if (ts < cutoff) recentAlerts.delete(key);
+  }
+}, ALERT_COOLDOWN_MS);
+
 function json(res, status, body) {
   res.writeHead(status, { "Content-Type": "application/json; charset=utf-8" });
   res.end(JSON.stringify(body));
@@ -148,7 +213,13 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
-    const targetUrl = new URL(req.url, route.baseUrl).toString();
+    const PROXY_BASE_PATH = "/api/v3";
+    const relativePath = req.url.startsWith(PROXY_BASE_PATH)
+      ? req.url.slice(PROXY_BASE_PATH.length)
+      : req.url;
+    const normalizedBase = route.baseUrl.replace(/\/+$/, "");
+    const targetUrl = normalizedBase + relativePath;
+    console.log(`[llm-proxy] ${req.method} ${req.url} -> ${route.match || "default"} (${route.model}) -> ${targetUrl}`);
 
     const headers = { ...req.headers };
     delete headers.host;
@@ -164,6 +235,14 @@ const server = http.createServer(async (req, res) => {
       headers,
       body: bodyToSend || undefined,
     });
+
+    if (upstream.status >= 400) {
+      const text = await upstream.text();
+      reportUpstreamError(upstream.status, route, route.model, text);
+      res.writeHead(upstream.status, Object.fromEntries(upstream.headers.entries()));
+      res.end(text);
+      return;
+    }
 
     const isStreaming =
       upstream.headers.get("content-type")?.includes("text/event-stream") ||

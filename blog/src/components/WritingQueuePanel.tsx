@@ -36,7 +36,13 @@ export function WritingQueuePanel({
   writeCron,
   timezone,
 }: Props) {
+  const [queueItems, setQueueItems] = useState<QueueItem[]>(initialQueue);
   const [relativeTime, setRelativeTime] = useState("");
+  const [clearing, setClearing] = useState(false);
+  const [exploring, setExploring] = useState(false);
+  const [exploreHint, setExploreHint] = useState("");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
   const nextRun = useMemo(
     () => getNextCronRun(writeCron, timezone),
     [writeCron, timezone]
@@ -50,22 +56,100 @@ export function WritingQueuePanel({
     return () => clearInterval(timer);
   }, [nextRun]);
 
-  const pendingItems = initialQueue
+  const pendingItems = queueItems
     .filter((item) => item.status === "pending")
     .sort((a, b) => b.score - a.score);
 
-  const doneCount = initialQueue.filter(
+  const doneCount = queueItems.filter(
     (item) => item.status === "done"
   ).length;
+
+  async function refreshQueue() {
+    const res = await fetch("/api/dashboard/queue", { cache: "no-store" });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || "刷新队列失败");
+    }
+    const nextQueue = Array.isArray(data.queue) ? (data.queue as QueueItem[]) : [];
+    setQueueItems(nextQueue);
+    return nextQueue;
+  }
+
+  async function handleClearQueue() {
+    const confirmed = window.confirm("确认清空写作队列吗？此操作会移除当前所有待写主题。");
+    if (!confirmed) return;
+
+    setClearing(true);
+    setMessage("");
+    setError("");
+    try {
+      const res = await fetch("/api/dashboard/queue", { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "清空失败");
+      }
+      setQueueItems([]);
+      setMessage(data.message || "写作队列已清空");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "清空失败");
+    } finally {
+      setClearing(false);
+    }
+  }
+
+  async function handleTriggerExplore() {
+    setExploring(true);
+    setExploreHint("正在向 Agent 发送探索指令…");
+    setMessage("");
+    setError("");
+    try {
+      const res = await fetch("/api/dashboard/trigger-explore", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "触发探索失败");
+      }
+      setExploreHint("探索循环已触发，正在等待发现新主题…");
+
+      for (let attempt = 0; attempt < 6; attempt += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        const nextQueue = await refreshQueue();
+        const hasPending = nextQueue.some((item) => item.status === "pending");
+        if (hasPending) {
+          setMessage("探索完成，已发现新的待写主题");
+          setExploreHint("");
+          setExploring(false);
+          return;
+        }
+        setExploreHint(`探索循环进行中，正在等待结果…（${(attempt + 1) * 3}s）`);
+      }
+
+      setMessage(data.message || "探索循环已触发，请稍候刷新查看结果");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "触发探索失败");
+    } finally {
+      setExploreHint("");
+      setExploring(false);
+    }
+  }
 
   return (
     <section className="neu-card rounded-xl p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-[var(--text-main)]">写作队列</h2>
-        <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
-          <span>{pendingItems.length} 待写</span>
-          <span>·</span>
-          <span>{doneCount} 已完成</span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
+            <span>{pendingItems.length} 待写</span>
+            <span>·</span>
+            <span>{doneCount} 已完成</span>
+          </div>
+          <button
+            type="button"
+            onClick={handleClearQueue}
+            disabled={clearing || queueItems.length === 0}
+            className="rounded-md border border-[var(--border-subtle)] px-2.5 py-1 text-xs text-[var(--text-main)] transition hover:border-red-500/40 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {clearing ? "清空中..." : "清空队列"}
+          </button>
         </div>
       </div>
 
@@ -97,9 +181,34 @@ export function WritingQueuePanel({
       </div>
 
       {pendingItems.length === 0 ? (
-        <p className="text-sm text-[var(--text-muted)] text-center py-4">
-          队列为空，等待探索循环发现新主题
-        </p>
+        <div className="py-4 text-center">
+          <p className="text-sm text-[var(--text-muted)]">
+            队列为空，等待探索循环发现新主题
+          </p>
+          {exploring ? (
+            <div className="mt-4 rounded-xl border border-purple-500/30 bg-purple-500/10 p-4 text-left">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-medium text-purple-200">探索循环进行中</p>
+                <span className="text-xs text-purple-300">请稍候</span>
+              </div>
+              <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
+                <div className="h-full w-2/3 rounded-full bg-purple-400 animate-pulse" />
+              </div>
+              <p className="mt-3 text-xs text-[var(--text-muted)]">
+                {exploreHint || "正在等待 Agent 返回探索结果…"}
+              </p>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={handleTriggerExplore}
+              disabled={exploring}
+              className="mt-3 rounded-lg bg-purple-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-purple-400 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              手动触发一次探索循环
+            </button>
+          )}
+        </div>
       ) : (
         <div className="space-y-2 max-h-80 overflow-y-auto">
           {pendingItems.map((item, idx) => (
@@ -163,6 +272,18 @@ export function WritingQueuePanel({
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {(message || error) && (
+        <div
+          className={`mt-4 rounded-lg border px-3 py-2 text-xs ${
+            error
+              ? "border-red-500/30 bg-red-500/10 text-red-300"
+              : "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+          }`}
+        >
+          {error || message}
         </div>
       )}
     </section>
