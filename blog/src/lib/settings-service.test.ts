@@ -164,41 +164,35 @@ describe("settings-service transforms", () => {
     expect(yaml).toContain("weight:");
   });
 
-  it("buildSourcesYaml preserves rss_feeds and other static sections from existing file", () => {
+  it("buildSourcesYaml generates rss_feeds from enabled directions", () => {
     const settings = getDefaultSettings();
-    const existingYaml = [
-      "search_groups:",
-      "  - name: old_group",
-      "    queries:",
-      "      - old query",
-      "",
-      "rss_feeds:",
-      '  - name: "HN"',
-      '    url: "https://hn.example.com"',
-      "",
-      "curated_urls:",
-      '  - name: "Lobsters"',
-      '    url: "https://lobste.rs"',
-      "",
-      "value_scoring:",
-      "  weights:",
-      "    timeliness: 2.0",
-    ].join("\n");
-
-    const yaml = buildSourcesYaml(settings, existingYaml);
+    const yaml = buildSourcesYaml(settings);
     expect(yaml).toContain('name: "tech_hot"');
-    expect(yaml).not.toContain("old_group");
     expect(yaml).toContain("rss_feeds:");
     expect(yaml).toContain("curated_urls:");
     expect(yaml).toContain("value_scoring:");
-    expect(yaml).toContain("https://hn.example.com");
+    expect(yaml).toContain("hnrss.org/frontpage");
+    expect(yaml).toContain("V2EX Hot");
   });
 
-  it("buildSourcesYaml works without existing file", () => {
+  it("buildSourcesYaml includes only enabled directions' sources", () => {
     const settings = getDefaultSettings();
+    for (const dir of settings.contentDirections.directions) {
+      dir.enabled = dir.id === "tech_hot";
+    }
     const yaml = buildSourcesYaml(settings);
-    expect(yaml).toContain("search_groups:");
-    expect(yaml).not.toContain("rss_feeds:");
+    expect(yaml).toContain("hnrss.org/frontpage");
+    expect(yaml).not.toContain("arxiv.org/rss/cs.AI");
+  });
+
+  it("buildSourcesYaml deduplicates RSS sources by URL", () => {
+    const settings = getDefaultSettings();
+    const dup = { name: "HN Dupe", url: "https://hnrss.org/frontpage", maxItems: 5 };
+    settings.contentDirections.directions[1].rssSources.push(dup);
+    settings.contentDirections.directions[1].enabled = true;
+    const yaml = buildSourcesYaml(settings);
+    const count = (yaml.match(/hnrss\.org\/frontpage/g) || []).length;
+    expect(count).toBe(1);
   });
 
   it("builds skills registry with active skills", () => {

@@ -34,12 +34,36 @@ Rotate through search groups based on their `frequency`:
 - `every_other_run`: Alternate cycles
 - `daily`: Once per day
 
+**If this is a manual trigger (ManualExploreTrigger)**: ignore frequency — search ALL groups, fetch ALL RSS feeds.
+
 For each active search group, pick 2-3 queries and call SearXNG.
 
 ### 2. RSS Feeds (via `web_fetch`)
-Fetch RSS feed URLs directly with `web_fetch`. Parse the XML/Atom output to extract titles and links. Respect `max_items` and `fetch_frequency` settings.
+Fetch RSS feed URLs directly with `web_fetch`. Parse the XML/Atom output to extract titles and links. Respect `max_items` and `fetch_frequency` settings (unless this is a manual trigger — then fetch ALL).
 
-Key RSS feeds from `sources.yaml` (use `web_fetch` on these URLs):
+Key RSS feeds from `sources.yaml` — organized by category (use `web_fetch` on these URLs):
+
+**Chinese Government & Policy (priority for policy direction):**
+- **新华网时政**: `http://www.news.cn/rss/politics.xml` (policy, every run)
+- **人民网时政**: `http://www.people.com.cn/rss/politics.xml` (policy, every run)
+- **新华网财经**: `http://www.news.cn/rss/fortune.xml` (finance, every run)
+- **人民网财经**: `http://www.people.com.cn/rss/finance.xml` (finance, every run)
+
+**Finance & World Affairs:**
+- **华尔街见闻**: `https://wallstreetcn.com/rss` (finance, every run)
+- **FT 中文网**: `https://www.ftchinese.com/rss/feed` (finance, every run)
+- **Reuters World**: `https://feeds.reuters.com/Reuters/worldNews` (world affairs, every run)
+- **BBC World**: `https://feeds.bbci.co.uk/news/world/rss.xml` (world affairs, every run)
+- **BBC Business**: `https://feeds.bbci.co.uk/news/business/rss.xml` (finance, every run)
+- **CNBC Top News**: `https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114` (finance, every run)
+- **新华社国际**: `http://www.news.cn/rss/world.xml` (world affairs, every run)
+
+**Curated government pages (use `web_fetch` to scrape):**
+- **中国政府网最新政策**: `https://www.gov.cn/zhengce/zuixin.htm` — extract policy document titles and links
+- **中国政府网要闻**: `https://www.gov.cn/yaowen/liebiao/index.html` — extract headline titles and links
+- **国家发改委新闻**: `https://www.ndrc.gov.cn/xwdt/xwfb/` — extract press release titles and links
+
+**Tech:**
 - **Hacker News**: `https://hnrss.org/frontpage` (most reliable, every run)
 - **ArXiv CS.AI**: `http://arxiv.org/rss/cs.AI` (daily)
 - **36kr**: `https://36kr.com/feed` (every run)
@@ -137,9 +161,11 @@ Key curated URLs:
    Multiply final score by the source's `weight` factor.
 
 9. **Route results**:
-   - Score >= 30 -> Add to `queue.json` with priority and suggested angle
-   - Score >= 15 -> Record in `memory/YYYY-MM-DD.md` as knowledge
-   - Score < 15  -> Dismiss
+   - Score >= 20 -> Add to `queue.json` with priority and suggested angle
+   - Score >= 10 -> Record in `memory/YYYY-MM-DD.md` as knowledge
+   - Score < 10  -> Dismiss
+   
+   **Important**: Be generous with scoring — a topic that is timely and relevant to the configured content directions should easily score 20+. Don't over-penalize topics for lacking "depth potential" or "uniqueness" — if it's newsworthy and the user wants to write about this direction, queue it.
 
 10. **Update queue.json** using `write` tool:
     ```json

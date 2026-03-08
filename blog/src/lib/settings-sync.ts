@@ -88,7 +88,7 @@ export function applySettingsToOpenClaw(
       {
         baseUrl: llmProxyUrl,
         api: provider.api,
-        apiKey: "${OPENAI_API_KEY}",
+        apiKey: "proxy-managed",
         models: provider.models.map((model) => ({
           id: model.id,
           name: model.name,
@@ -293,13 +293,14 @@ export function buildSearchGroups(settings: DashboardSettings): SourcesYamlSearc
 
 export function buildSourcesYaml(
   settings: DashboardSettings,
-  existingYaml?: string
+  _existingYaml?: string
 ): string {
   const groups = buildSearchGroups(settings);
+  const enabledDirs = settings.contentDirections.directions.filter((d) => d.enabled);
 
   const lines: string[] = [
     "# Multi-source configuration for the Explore Cycle",
-    "# search_groups are managed by Dashboard settings — do not edit manually.",
+    "# Fully managed by Dashboard settings — do not edit manually.",
     "",
     "search_groups:",
   ];
@@ -316,27 +317,86 @@ export function buildSourcesYaml(
     lines.push("");
   }
 
-  const staticSections = extractStaticSections(existingYaml);
-  if (staticSections) {
-    lines.push(staticSections);
-  }
-
-  return lines.join("\n");
-}
-
-function extractStaticSections(yaml?: string): string | null {
-  if (!yaml) return null;
-
-  const sectionHeaders = ["rss_feeds:", "curated_urls:", "value_scoring:", "source_health:"];
-  let earliest = -1;
-
-  for (const header of sectionHeaders) {
-    const idx = yaml.indexOf(header);
-    if (idx !== -1 && (earliest === -1 || idx < earliest)) {
-      earliest = idx;
+  const seenRssUrls = new Set<string>();
+  const rssItems: { name: string; url: string; category: string; frequency: string; maxItems: number }[] = [];
+  for (const dir of enabledDirs) {
+    for (const rss of dir.rssSources) {
+      if (!seenRssUrls.has(rss.url)) {
+        seenRssUrls.add(rss.url);
+        rssItems.push({
+          name: rss.name,
+          url: rss.url,
+          category: dir.id,
+          frequency: dir.frequency,
+          maxItems: rss.maxItems,
+        });
+      }
     }
   }
 
-  if (earliest === -1) return null;
-  return yaml.slice(earliest).trimEnd();
+  lines.push("rss_feeds:");
+  if (rssItems.length === 0) {
+    lines.push("  []");
+  } else {
+    for (const item of rssItems) {
+      lines.push(`  - name: "${yamlEscape(item.name)}"`);
+      lines.push(`    url: "${yamlEscape(item.url)}"`);
+      lines.push(`    category: "${yamlEscape(item.category)}"`);
+      lines.push(`    fetch_frequency: "${item.frequency}"`);
+      lines.push(`    max_items: ${item.maxItems}`);
+      lines.push(`    reliability: 0.85`);
+      lines.push("");
+    }
+  }
+
+  const seenCuratedUrls = new Set<string>();
+  const curatedItems: { name: string; url: string; category: string; frequency: string; description: string }[] = [];
+  for (const dir of enabledDirs) {
+    for (const cu of dir.curatedUrls) {
+      if (!seenCuratedUrls.has(cu.url)) {
+        seenCuratedUrls.add(cu.url);
+        curatedItems.push({
+          name: cu.name,
+          url: cu.url,
+          category: dir.id,
+          frequency: dir.frequency,
+          description: cu.description,
+        });
+      }
+    }
+  }
+
+  lines.push("curated_urls:");
+  if (curatedItems.length === 0) {
+    lines.push("  []");
+  } else {
+    for (const item of curatedItems) {
+      lines.push(`  - name: "${yamlEscape(item.name)}"`);
+      lines.push(`    url: "${yamlEscape(item.url)}"`);
+      lines.push(`    category: "${yamlEscape(item.category)}"`);
+      lines.push(`    fetch_frequency: "${item.frequency}"`);
+      lines.push(`    description: "${yamlEscape(item.description)}"`);
+      lines.push("");
+    }
+  }
+
+  lines.push("value_scoring:");
+  lines.push("  weights:");
+  lines.push("    timeliness: 2.0");
+  lines.push("    impact: 2.0");
+  lines.push("    depth_potential: 1.5");
+  lines.push("    uniqueness: 1.5");
+  lines.push("    relevance: 1.0");
+  lines.push("");
+  lines.push("  thresholds:");
+  lines.push("    write_queue: 20");
+  lines.push("    store_memory: 10");
+  lines.push("    dismiss: 10");
+  lines.push("");
+  lines.push("source_health:");
+  lines.push("  check_interval_hours: 24");
+  lines.push("  max_consecutive_failures: 3");
+  lines.push('  fallback_strategy: "skip_and_log"');
+
+  return lines.join("\n");
 }

@@ -6,10 +6,7 @@
 
 - **Docker** ≥ 24.0 + **Docker Compose** v2
 - **4GB+ 内存**的主机（推荐 4 核 4GB+）
-- 以下 API Key（至少一个 LLM）：
-  - [Doubao / 火山方舟](https://www.volcengine.com/product/doubao) — `OPENAI_API_KEY`
-  - [Google Gemini](https://aistudio.google.com/) — `GEMINI_API_KEY`
-  - [Anthropic Claude](https://console.anthropic.com/) — `ANTHROPIC_API_KEY`（可选，用于深度写作）
+- 至少一个 LLM API Key（在 Dashboard 中配置）
 
 ## 第一步：克隆项目
 
@@ -27,10 +24,6 @@ cp .env.example .env
 编辑 `.env` 文件，**必须填写**的项：
 
 ```bash
-# LLM API Keys（至少填一个）
-OPENAI_API_KEY=your_ark_api_key
-GEMINI_API_KEY=your_gemini_api_key
-
 # 安全令牌（请替换为随机字符串）
 OPENCLAW_HOOKS_TOKEN=随机字符串_32位以上
 BLOG_INTERNAL_TOKEN=随机字符串_32位以上
@@ -41,20 +34,9 @@ LLM_PROXY_ADMIN_TOKEN=随机字符串_32位以上
 BLOG_PG_PASSWORD=你的数据库密码
 ```
 
-可选项：
-
-```bash
-# Anthropic（深度写作用）
-ANTHROPIC_API_KEY=your_anthropic_api_key
-
-# 每日 Token 预算（单位：美分，默认 200 = $2.00/天）
-DAILY_TOKEN_BUDGET_CENTS=200
-
-# 告警 Webhook（Slack/Discord）
-# ALERT_WEBHOOK_URL=https://hooks.slack.com/services/your/webhook/url
-```
-
 > **安全提示**：所有 token 请使用 `openssl rand -hex 24` 或类似命令生成随机字符串。
+>
+> **LLM API Key 不在 `.env` 中配置**，请在服务启动后通过 Dashboard 设置中心添加。
 
 ## 第三步：启动服务
 
@@ -92,7 +74,23 @@ docker compose exec openclaw openclaw cron list
 
 应看到 4 个 job：`explore`、`write`、`interact`、`reflect`。
 
-## 第五步：访问服务
+## 第五步：配置 LLM Provider
+
+打开设置中心 http://localhost:3005/settings ，在**模型配置**页签中：
+
+1. 点击已有 Provider 的"配置详情"
+2. 填入你的 **API Key** 和正确的 **Base URL**
+3. 添加需要的模型
+4. 点击"测试 API Key"验证连接
+5. 点击"保存并应用（重启服务）"使配置生效
+
+支持的 Provider（任选至少一个）：
+- [Doubao / 火山方舟](https://www.volcengine.com/product/doubao)
+- [Google Gemini](https://aistudio.google.com/)
+- [Anthropic Claude](https://console.anthropic.com/)
+- 任何 OpenAI 兼容接口
+
+## 第六步：访问服务
 
 | 页面 | 地址 | 说明 |
 |------|------|------|

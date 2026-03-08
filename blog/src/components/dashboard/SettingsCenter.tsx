@@ -6,6 +6,8 @@ import type {
   ThemeMode,
   ContentDirection,
   ContentFrequency,
+  RssSource,
+  CuratedUrlSource,
   ModelProviderConfig,
   SkillItemConfig,
   SkillImportSource,
@@ -202,6 +204,8 @@ export function SettingsCenter({ initialSettings }: Props) {
             enabled: true,
             weight: 1.0,
             frequency: "every_run" as ContentFrequency,
+            rssSources: [],
+            curatedUrls: [],
           },
         ],
       },
@@ -1872,6 +1876,30 @@ export function SettingsCenter({ initialSettings }: Props) {
                               }
                             />
                           </div>
+
+                          <SourceEditor
+                            title="RSS 订阅源"
+                            placeholder={{ name: "如：Reuters World News", url: "https://feeds.reuters.com/..." }}
+                            items={(dir.rssSources ?? []).map((r) => ({ name: r.name, url: r.url, extra: `最多 ${r.maxItems} 条` }))}
+                            onAdd={(name, url) =>
+                              updateDirection(dir.id, { rssSources: [...(dir.rssSources ?? []), { name, url, maxItems: 8 }] })
+                            }
+                            onRemove={(idx) =>
+                              updateDirection(dir.id, { rssSources: (dir.rssSources ?? []).filter((_, i) => i !== idx) })
+                            }
+                          />
+
+                          <SourceEditor
+                            title="网页抓取源"
+                            placeholder={{ name: "如：中国政府网", url: "https://www.gov.cn/..." }}
+                            items={(dir.curatedUrls ?? []).map((c) => ({ name: c.name, url: c.url, extra: c.description }))}
+                            onAdd={(name, url) =>
+                              updateDirection(dir.id, { curatedUrls: [...(dir.curatedUrls ?? []), { name, url, description: "" }] })
+                            }
+                            onRemove={(idx) =>
+                              updateDirection(dir.id, { curatedUrls: (dir.curatedUrls ?? []).filter((_, i) => i !== idx) })
+                            }
+                          />
                         </div>
                       </AccordionContent>
                     </AccordionItem>
@@ -1880,8 +1908,8 @@ export function SettingsCenter({ initialSettings }: Props) {
 
                 <Alert className="border-[var(--border-subtle)]">
                   <AlertDescription className="text-xs text-[var(--text-muted)]">
-                    已启用的方向将同步到 Agent 的 sources.yaml 搜索组和 meta_memory。
-                    权重影响搜索结果评分，频率控制搜索执行间隔。保存并应用后生效。
+                    已启用的方向将同步到 Agent 的 sources.yaml（搜索组、RSS 订阅源、网页抓取源）。
+                    权重影响搜索结果评分，频率控制搜索和 RSS 拉取间隔。保存并应用后生效。
                   </AlertDescription>
                 </Alert>
               </div>
@@ -1992,6 +2020,98 @@ function KeywordAdder({ onAdd }: { onAdd: (kw: string) => void }) {
       <Button variant="default" onClick={submit} disabled={!value.trim()} className="text-xs">
         添加
       </Button>
+    </div>
+  );
+}
+
+function SourceEditor({
+  title,
+  placeholder,
+  items,
+  onAdd,
+  onRemove,
+}: {
+  title: string;
+  placeholder: { name: string; url: string };
+  items: { name: string; url: string; extra?: string }[];
+  onAdd: (name: string, url: string) => void;
+  onRemove: (idx: number) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [url, setUrl] = useState("");
+
+  const submit = () => {
+    const n = name.trim();
+    const u = url.trim();
+    if (!n || !u.startsWith("http")) return;
+    onAdd(n, u);
+    setName("");
+    setUrl("");
+    setOpen(false);
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <Label className="text-xs">{title} ({items.length})</Label>
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          className="text-xs text-[var(--accent)] hover:underline"
+        >
+          {open ? "取消" : "+ 添加"}
+        </button>
+      </div>
+      {items.length > 0 && (
+        <div className="space-y-1">
+          {items.map((item, idx) => (
+            <div
+              key={idx}
+              className="flex items-center gap-2 rounded-md border border-[var(--border-subtle)] px-2.5 py-1.5 text-xs"
+            >
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-[var(--text-main)] truncate">{item.name}</div>
+                <div className="text-[var(--text-muted)] truncate">{item.url}</div>
+                {item.extra && <div className="text-[var(--text-muted)] text-[10px]">{item.extra}</div>}
+              </div>
+              <button
+                type="button"
+                onClick={() => onRemove(idx)}
+                className="shrink-0 text-[var(--text-muted)] hover:text-red-500 transition-colors p-0.5"
+              >
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      {open && (
+        <div className="space-y-2 rounded-md border border-dashed border-[var(--accent)]/40 p-2.5">
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={placeholder.name}
+            className="text-xs"
+          />
+          <Input
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder={placeholder.url}
+            className="text-xs"
+          />
+          <Button
+            variant="primary"
+            onClick={submit}
+            disabled={!name.trim() || !url.trim().startsWith("http")}
+            className="text-xs w-full"
+          >
+            确认添加
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

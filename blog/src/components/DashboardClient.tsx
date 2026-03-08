@@ -171,10 +171,14 @@ export function DashboardClient({
     return () => clearInterval(timer);
   }, []);
 
-  const PROGRESS_TIMEOUT_MS = 120_000;
+  const PROGRESS_TIMEOUT_MS = 300_000;
+  const POLL_INTERVAL_MS = 5_000;
+  const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const writeStartRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (progressTimer.current) clearTimeout(progressTimer.current);
+    if (pollTimer.current) clearInterval(pollTimer.current);
 
     const isNonTerminal =
       writeStage !== "idle" &&
@@ -185,12 +189,61 @@ export function DashboardClient({
     if (isNonTerminal) {
       lastProgressRef.current = Date.now();
 
+      pollTimer.current = setInterval(async () => {
+        try {
+          const res = await fetch("/api/agent/status", { cache: "no-store" });
+          if (!res.ok) return;
+          const data = await res.json();
+          const ws = (data.statuses ?? []).find(
+            (s: { cycleName: string }) => s.cycleName === "write"
+          );
+          if (!ws) return;
+
+          const updatedAt = ws.updatedAt ? new Date(ws.updatedAt).toISOString() : null;
+
+          if (!writeStartRef.current) {
+            writeStartRef.current = updatedAt;
+          }
+
+          const isNewUpdate = updatedAt && updatedAt > (writeStartRef.current ?? "");
+          if (!isNewUpdate && ws.status !== "running") return;
+
+          const task = ws.currentTask || "";
+          const status = ws.status as string;
+
+          lastProgressRef.current = Date.now();
+
+          if (status === "idle" || status === "error") {
+            const inferred = inferStageFromTask(task);
+            setWriteStage(
+              inferred === "empty_queue" ? "empty_queue"
+                : inferred === "done" ? "done"
+                  : status === "error" ? "error" : "done"
+            );
+            setWriteMessage(task);
+            if (autoResetTimer.current) clearTimeout(autoResetTimer.current);
+            autoResetTimer.current = setTimeout(() => {
+              setWriteStage("idle");
+              setWriteMessage("");
+            }, 15000);
+          } else if (status === "running") {
+            const inferred = inferStageFromTask(task);
+            if (inferred) {
+              setWriteStage(inferred);
+              setWriteMessage(task);
+            }
+          }
+        } catch {
+          // polling error, ignore
+        }
+      }, POLL_INTERVAL_MS);
+
       const checkTimeout = () => {
         const elapsed = Date.now() - lastProgressRef.current;
         if (elapsed >= PROGRESS_TIMEOUT_MS) {
           setWriteStage("error");
           setWriteMessage(
-            "写作超时：超过 2 分钟未收到 Agent 进度更新，请检查设置是否已「保存并应用」、Agent 服务是否正常运行"
+            "写作超时：超过 5 分钟未收到 Agent 进度更新，请检查设置是否已「保存并应用」、Agent 服务是否正常运行"
           );
           if (autoResetTimer.current) clearTimeout(autoResetTimer.current);
           autoResetTimer.current = setTimeout(() => {
@@ -210,6 +263,7 @@ export function DashboardClient({
 
     return () => {
       if (progressTimer.current) clearTimeout(progressTimer.current);
+      if (pollTimer.current) clearInterval(pollTimer.current);
     };
   }, [writeStage]);
 
@@ -217,6 +271,7 @@ export function DashboardClient({
     return () => {
       if (autoResetTimer.current) clearTimeout(autoResetTimer.current);
       if (progressTimer.current) clearTimeout(progressTimer.current);
+      if (pollTimer.current) clearInterval(pollTimer.current);
     };
   }, []);
 
@@ -226,6 +281,7 @@ export function DashboardClient({
     setWriteStage("triggering");
     setWriteMessage("正在发送写作指令…");
     lastProgressRef.current = Date.now();
+    writeStartRef.current = new Date().toISOString();
     try {
       const res = await fetch("/api/dashboard/trigger-write", { method: "POST" });
       const data = await res.json();

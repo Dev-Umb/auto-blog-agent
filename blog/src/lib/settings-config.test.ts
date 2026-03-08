@@ -241,6 +241,58 @@ describe("settings-config", () => {
     expect(settings.contentDirections.directions).toHaveLength(30);
   });
 
+  it("fills preset rssSources/curatedUrls for known directions missing those fields", () => {
+    const settings = sanitizeSettingsInput({
+      contentDirections: {
+        directions: [
+          { id: "policy", label: "国家政策", description: "", keywords: ["k"], enabled: true, weight: 1, frequency: "every_run" },
+        ],
+      },
+    });
+    const dir = settings.contentDirections.directions[0];
+    expect(dir.rssSources.length).toBeGreaterThan(0);
+    expect(dir.curatedUrls.length).toBeGreaterThan(0);
+    expect(dir.rssSources[0].url).toContain("news.cn");
+  });
+
+  it("keeps explicit empty rssSources/curatedUrls", () => {
+    const settings = sanitizeSettingsInput({
+      contentDirections: {
+        directions: [
+          { id: "policy", label: "国家政策", description: "", keywords: ["k"], enabled: true, weight: 1, frequency: "every_run", rssSources: [], curatedUrls: [] },
+        ],
+      },
+    });
+    const dir = settings.contentDirections.directions[0];
+    expect(dir.rssSources).toEqual([]);
+    expect(dir.curatedUrls).toEqual([]);
+  });
+
+  it("sanitizes invalid RSS source entries", () => {
+    const settings = sanitizeSettingsInput({
+      contentDirections: {
+        directions: [
+          {
+            id: "test", label: "Test", description: "", keywords: ["k"], enabled: true, weight: 1, frequency: "every_run",
+            rssSources: [
+              { name: "Good", url: "https://example.com/rss", maxItems: 5 },
+              { name: "", url: "https://example.com/rss2", maxItems: 5 },
+              { name: "Bad URL", url: "not-a-url", maxItems: 5 },
+            ],
+            curatedUrls: [
+              { name: "Good", url: "https://example.com", description: "desc" },
+              { name: "", url: "https://example.com/2", description: "" },
+            ],
+          },
+        ],
+      },
+    });
+    const dir = settings.contentDirections.directions[0];
+    expect(dir.rssSources).toHaveLength(1);
+    expect(dir.rssSources[0].name).toBe("Good");
+    expect(dir.curatedUrls).toHaveLength(1);
+  });
+
   it("sanitizes skills and computes activeSkills", () => {
     const settings = sanitizeSettingsInput({
       skillsConfig: {

@@ -97,6 +97,21 @@ export function WritingQueuePanel({
     }
   }
 
+  async function fetchExploreStatus(): Promise<string | null> {
+    try {
+      const res = await fetch("/api/agent/status", { cache: "no-store" });
+      if (!res.ok) return null;
+      const data = await res.json();
+      const explore = (data.statuses ?? []).find(
+        (s: { cycleName: string }) => s.cycleName === "explore"
+      );
+      if (!explore) return null;
+      return explore.currentTask || explore.status || null;
+    } catch {
+      return null;
+    }
+  }
+
   async function handleTriggerExplore() {
     setExploring(true);
     setExploreHint("正在向 Agent 发送探索指令…");
@@ -108,10 +123,34 @@ export function WritingQueuePanel({
       if (!res.ok) {
         throw new Error(data.message || "触发探索失败");
       }
-      setExploreHint("探索循环已触发，正在等待发现新主题…");
+      setExploreHint("探索循环已触发，正在等待 Agent 开始执行…");
 
-      for (let attempt = 0; attempt < 6; attempt += 1) {
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+      const MAX_ATTEMPTS = 40;
+      const POLL_INTERVAL_MS = 5000;
+      let lastAgentTask = "";
+
+      for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
+        await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+
+        const agentTask = await fetchExploreStatus();
+        if (agentTask && agentTask !== lastAgentTask) {
+          lastAgentTask = agentTask;
+          setExploreHint(agentTask);
+        }
+
+        if (agentTask && /完成|idle|finish|done/i.test(agentTask)) {
+          const nextQueue = await refreshQueue();
+          const newPending = nextQueue.filter((item) => item.status === "pending");
+          if (newPending.length > 0) {
+            setMessage(`探索完成，发现 ${newPending.length} 个待写主题`);
+          } else {
+            setMessage("探索完成，暂未发现合适话题");
+          }
+          setExploreHint("");
+          setExploring(false);
+          return;
+        }
+
         const nextQueue = await refreshQueue();
         const hasPending = nextQueue.some((item) => item.status === "pending");
         if (hasPending) {
@@ -120,10 +159,14 @@ export function WritingQueuePanel({
           setExploring(false);
           return;
         }
-        setExploreHint(`探索循环进行中，正在等待结果…（${(attempt + 1) * 3}s）`);
+
+        const elapsed = Math.round(((attempt + 1) * POLL_INTERVAL_MS) / 1000);
+        if (!agentTask) {
+          setExploreHint(`等待 Agent 响应中…（${elapsed}s）`);
+        }
       }
 
-      setMessage(data.message || "探索循环已触发，请稍候刷新查看结果");
+      setMessage(data.message || "探索循环仍在执行中，请稍后刷新页面查看结果");
     } catch (err) {
       setError(err instanceof Error ? err.message : "触发探索失败");
     } finally {

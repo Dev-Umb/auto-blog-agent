@@ -12,11 +12,6 @@ services:
       - openclaw_cron:/root/.openclaw/cron
       - ./scripts:/scripts:ro
     environment:
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - OPENAI_BASE_URL=http://llm-proxy:4010/api/v3
-      - BRAVE_API_KEY=${BRAVE_API_KEY}
       - OPENCLAW_HOOKS_TOKEN=${OPENCLAW_HOOKS_TOKEN}
       - BLOG_INTERNAL_TOKEN=${BLOG_INTERNAL_TOKEN}
     ports:
@@ -124,7 +119,7 @@ services:
       - blog_pgdata:/var/lib/postgresql/data
       - ./scripts/setup-db.sql:/docker-entrypoint-initdb.d/01-setup.sql
     ports:
-      - "5432:5432"
+      - "5433:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U blog -d blog"]
       interval: 5s

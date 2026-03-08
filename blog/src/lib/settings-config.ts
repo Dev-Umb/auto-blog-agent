@@ -123,6 +123,18 @@ export interface ThemePreferences {
 
 export type ContentFrequency = "every_run" | "every_other_run" | "daily";
 
+export interface RssSource {
+  name: string;
+  url: string;
+  maxItems: number;
+}
+
+export interface CuratedUrlSource {
+  name: string;
+  url: string;
+  description: string;
+}
+
 export interface ContentDirection {
   id: string;
   label: string;
@@ -131,6 +143,8 @@ export interface ContentDirection {
   enabled: boolean;
   weight: number;
   frequency: ContentFrequency;
+  rssSources: RssSource[];
+  curatedUrls: CuratedUrlSource[];
 }
 
 export interface ContentDirectionSettings {
@@ -146,6 +160,13 @@ export const PRESET_CONTENT_DIRECTIONS: ContentDirection[] = [
     enabled: true,
     weight: 1.0,
     frequency: "every_run",
+    rssSources: [
+      { name: "Hacker News Front Page", url: "https://hnrss.org/frontpage", maxItems: 10 },
+      { name: "36kr", url: "https://36kr.com/feed", maxItems: 8 },
+    ],
+    curatedUrls: [
+      { name: "V2EX Hot", url: "https://www.v2ex.com/?tab=hot", description: "中文开发者社区热门话题" },
+    ],
   },
   {
     id: "deep_tech",
@@ -155,6 +176,16 @@ export const PRESET_CONTENT_DIRECTIONS: ContentDirection[] = [
     enabled: true,
     weight: 1.2,
     frequency: "every_other_run",
+    rssSources: [
+      { name: "ArXiv CS.AI", url: "http://arxiv.org/rss/cs.AI", maxItems: 5 },
+      { name: "ArXiv CS.CL", url: "http://arxiv.org/rss/cs.CL", maxItems: 5 },
+      { name: "Hacker News Best", url: "https://hnrss.org/best", maxItems: 5 },
+    ],
+    curatedUrls: [
+      { name: "GitHub Trending", url: "https://github.com/trending", description: "GitHub 今日热门仓库" },
+      { name: "Reddit r/programming", url: "https://www.reddit.com/r/programming/top/.json?t=day", description: "Reddit 编程板块热帖" },
+      { name: "Reddit r/MachineLearning", url: "https://www.reddit.com/r/MachineLearning/hot/.json?limit=10", description: "Reddit 机器学习板块" },
+    ],
   },
   {
     id: "entertainment",
@@ -164,33 +195,65 @@ export const PRESET_CONTENT_DIRECTIONS: ContentDirection[] = [
     enabled: false,
     weight: 0.8,
     frequency: "every_run",
+    rssSources: [],
+    curatedUrls: [],
   },
   {
     id: "policy",
     label: "国家政策",
     description: "两会政策、国务院决策、经济改革动向",
-    keywords: ["两会政策 最新解读", "国务院政策 经济政策", "政府工作报告 改革"],
+    keywords: ["中国 最新政策 今日", "国务院 发改委 新规", "政策解读 经济改革 最新"],
     enabled: false,
     weight: 1.0,
     frequency: "every_run",
+    rssSources: [
+      { name: "新华网时政", url: "http://www.news.cn/rss/politics.xml", maxItems: 10 },
+      { name: "人民网时政", url: "http://www.people.com.cn/rss/politics.xml", maxItems: 10 },
+    ],
+    curatedUrls: [
+      { name: "中国政府网 - 最新政策", url: "https://www.gov.cn/zhengce/zuixin.htm", description: "国务院及各部委最新政策文件" },
+      { name: "中国政府网 - 要闻", url: "https://www.gov.cn/yaowen/liebiao/index.html", description: "政府门户首页要闻" },
+      { name: "国家发改委 - 新闻发布", url: "https://www.ndrc.gov.cn/xwdt/xwfb/", description: "发改委新闻发布" },
+      { name: "中国人大网 - 要闻", url: "http://www.npc.gov.cn/npc/c2/c184/newsList.shtml", description: "全国人大常委会立法动态" },
+    ],
   },
   {
     id: "world_affairs",
     label: "世界局势",
     description: "国际新闻、地缘政治、全球经济走势",
-    keywords: ["国际新闻 地缘政治", "全球经济 走势分析", "world news geopolitics"],
+    keywords: ["今日 国际新闻 重大事件", "地缘政治 最新局势", "international news today breaking"],
     enabled: false,
-    weight: 0.8,
-    frequency: "every_other_run",
+    weight: 1.0,
+    frequency: "every_run",
+    rssSources: [
+      { name: "Reuters World News", url: "https://feeds.reuters.com/Reuters/worldNews", maxItems: 8 },
+      { name: "BBC World News", url: "https://feeds.bbci.co.uk/news/world/rss.xml", maxItems: 8 },
+      { name: "新华社国际", url: "http://www.news.cn/rss/world.xml", maxItems: 8 },
+    ],
+    curatedUrls: [
+      { name: "Reddit r/worldnews", url: "https://www.reddit.com/r/worldnews/top/.json?t=day", description: "Reddit 世界新闻板块" },
+    ],
   },
   {
     id: "finance",
     label: "股市财经",
     description: "A 股行情、美股动态、基金理财策略",
-    keywords: ["A股行情 美股动态", "基金理财 投资策略", "stock market finance news"],
+    keywords: ["今日 A股 美股 行情", "股市 财经 热点新闻", "financial markets today news"],
     enabled: false,
-    weight: 0.9,
+    weight: 1.0,
     frequency: "every_run",
+    rssSources: [
+      { name: "华尔街见闻", url: "https://wallstreetcn.com/rss", maxItems: 8 },
+      { name: "FT 中文网", url: "https://www.ftchinese.com/rss/feed", maxItems: 8 },
+      { name: "BBC Business", url: "https://feeds.bbci.co.uk/news/business/rss.xml", maxItems: 5 },
+      { name: "CNBC Top News", url: "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114", maxItems: 8 },
+      { name: "新华网财经", url: "http://www.news.cn/rss/fortune.xml", maxItems: 8 },
+      { name: "人民网财经", url: "http://www.people.com.cn/rss/finance.xml", maxItems: 8 },
+    ],
+    curatedUrls: [
+      { name: "Reddit r/economics", url: "https://www.reddit.com/r/economics/top/.json?t=day", description: "Reddit 经济板块" },
+      { name: "Reddit r/stocks", url: "https://www.reddit.com/r/stocks/top/.json?t=day", description: "Reddit 股票板块" },
+    ],
   },
   {
     id: "internet_culture",
@@ -200,6 +263,14 @@ export const PRESET_CONTENT_DIRECTIONS: ContentDirection[] = [
     enabled: false,
     weight: 0.7,
     frequency: "every_other_run",
+    rssSources: [
+      { name: "The Verge", url: "https://www.theverge.com/rss/index.xml", maxItems: 5 },
+      { name: "Ars Technica", url: "https://feeds.arstechnica.com/arstechnica/technology-lab", maxItems: 5 },
+      { name: "MIT Technology Review", url: "https://www.technologyreview.com/feed/", maxItems: 3 },
+    ],
+    curatedUrls: [
+      { name: "Lobsters", url: "https://lobste.rs", description: "技术社区链接聚合" },
+    ],
   },
 ];
 
@@ -231,7 +302,6 @@ const DEFAULT_SETTINGS: DashboardSettings = {
         baseUrl: "https://ark.cn-beijing.volces.com/api/v3",
         api: "openai-completions",
         apiKey: "",
-        apiKeyEnv: "OPENAI_API_KEY",
         models: [
           {
             id: "doubao-seed-2-0-pro-260215",
@@ -247,7 +317,6 @@ const DEFAULT_SETTINGS: DashboardSettings = {
         baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai",
         api: "openai-completions",
         apiKey: "",
-        apiKeyEnv: "GEMINI_API_KEY",
         models: [
           {
             id: "gemini-2.0-flash",
@@ -258,24 +327,7 @@ const DEFAULT_SETTINGS: DashboardSettings = {
         ],
       },
     ],
-    routes: [
-      {
-        key: "gemini",
-        match: "gemini",
-        baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai",
-        model: "gemini-2.0-flash",
-        apiKey: "",
-        apiKeyEnv: "GEMINI_API_KEY",
-      },
-      {
-        key: "claude",
-        match: "claude",
-        baseUrl: "https://api.anthropic.com/v1",
-        model: "claude-sonnet-4-20250514",
-        apiKey: "",
-        apiKeyEnv: "ANTHROPIC_API_KEY",
-      },
-    ],
+    routes: [],
   },
   skillsConfig: {
     items: [
@@ -481,6 +533,32 @@ function clampWeight(value: unknown, fallback: number): number {
   return Math.round(Math.max(0.1, Math.min(2.0, n)) * 10) / 10;
 }
 
+function sanitizeRssSources(raw: unknown): RssSource[] {
+  return ensureArray<RssSource>(raw, [])
+    .filter((item) => isObjectRecord(item))
+    .slice(0, 50)
+    .map((item) => ({
+      name: asString(item.name, ""),
+      url: asString(item.url, ""),
+      maxItems: Math.max(1, Math.min(30, asNumber(item.maxItems, 8))),
+    }))
+    .filter((item) => item.name && item.url.startsWith("http"));
+}
+
+function sanitizeCuratedUrls(raw: unknown): CuratedUrlSource[] {
+  return ensureArray<CuratedUrlSource>(raw, [])
+    .filter((item) => isObjectRecord(item))
+    .slice(0, 50)
+    .map((item) => ({
+      name: asString(item.name, ""),
+      url: asString(item.url, ""),
+      description: asString(item.description, ""),
+    }))
+    .filter((item) => item.name && item.url.startsWith("http"));
+}
+
+const presetById = new Map(PRESET_CONTENT_DIRECTIONS.map((p) => [p.id, p]));
+
 function sanitizeContentDirections(
   source: unknown,
   base: ContentDirectionSettings
@@ -491,19 +569,29 @@ function sanitizeContentDirections(
   const rawDirs = ensureArray<ContentDirection>(raw.directions, base.directions);
   if (rawDirs.length === 0) return base;
 
-  const directions = rawDirs.slice(0, 30).map((dir, idx) => ({
-    id: asString(dir.id, `direction_${idx + 1}`),
-    label: asString(dir.label, `方向 ${idx + 1}`),
-    description: asString(dir.description, ""),
-    keywords: ensureArray<string>(dir.keywords, [])
-      .filter((k) => typeof k === "string" && k.trim().length > 0)
-      .map((k) => k.trim()),
-    enabled: typeof dir.enabled === "boolean" ? dir.enabled : false,
-    weight: clampWeight(dir.weight, 1.0),
-    frequency: VALID_FREQUENCIES.includes(dir.frequency as ContentFrequency)
-      ? (dir.frequency as ContentFrequency)
-      : "every_run",
-  }));
+  const directions = rawDirs.slice(0, 30).map((dir, idx) => {
+    const id = asString(dir.id, `direction_${idx + 1}`);
+    const preset = presetById.get(id);
+    return {
+      id,
+      label: asString(dir.label, `方向 ${idx + 1}`),
+      description: asString(dir.description, ""),
+      keywords: ensureArray<string>(dir.keywords, [])
+        .filter((k) => typeof k === "string" && k.trim().length > 0)
+        .map((k) => k.trim()),
+      enabled: typeof dir.enabled === "boolean" ? dir.enabled : false,
+      weight: clampWeight(dir.weight, 1.0),
+      frequency: VALID_FREQUENCIES.includes(dir.frequency as ContentFrequency)
+        ? (dir.frequency as ContentFrequency)
+        : "every_run",
+      rssSources: Array.isArray(dir.rssSources)
+        ? sanitizeRssSources(dir.rssSources)
+        : (preset?.rssSources ?? []),
+      curatedUrls: Array.isArray(dir.curatedUrls)
+        ? sanitizeCuratedUrls(dir.curatedUrls)
+        : (preset?.curatedUrls ?? []),
+    };
+  });
 
   return { directions };
 }
@@ -823,7 +911,7 @@ export function validateSettings(settings: DashboardSettings): string[] {
       errors.push(`provider(${provider.key}) baseUrl 必须是 http(s) URL`);
     }
     if (!provider.apiKey && !provider.apiKeyEnv) {
-      errors.push(`provider(${provider.key}) 需要提供 apiKey 或 apiKeyEnv`);
+      errors.push(`provider(${provider.key}) 需要在"配置详情"中填写 API Key`);
     }
     if (provider.models.length === 0) {
       errors.push(`provider(${provider.key}) models 不能为空`);
